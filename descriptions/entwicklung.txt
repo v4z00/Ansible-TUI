@@ -1,0 +1,20 @@
+Ansible-TUI aus dem Checkout bauen und testen
+
+Im Checkout installieren und ein Projekt einrichten
+
+cargo install --locked --path .
+ansible-tui init --project PFAD
+
+Tests ausführen
+
+cargo fmt --check
+cargo test --locked
+cargo clippy --locked --all-targets -- -D warnings
+cargo build --locked
+python3 tests/installer.py  # unter Linux
+python3 tests/standalone.py --binary target/debug/ansible-tui
+python3 tests/integration.py --binary target/debug/ansible-tui --tmux "$(command -v tmux)"
+python3 tests/lifecycle.py --binary target/debug/ansible-tui --tmux "$(command -v tmux)"
+
+Lokal werden die Integrationstests mit einem separaten tmux-Socket,
+temporären Dateien und Testdaten ausgeführt.
