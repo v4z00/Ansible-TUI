@@ -10,57 +10,97 @@ und hält Ergebnisse und quittierte Fehler in einem lokalen Verlauf fest.
 Die Projektidee und Anforderungen stammen vom Betreiber. KI unterstützt beim
 Schreiben und Testen des Codes.
 
-## Voraussetzungen
+## Installation auf Debian
 
-- Ein vorhandenes Ansible-Projekt und eine funktionierende Installation von
-  **Ansible oder ansible-core** auf dem Controller. `ansible-playbook` und
-  `ansible-inventory` müssen verfügbar sein. Ansible TUI berücksichtigt auch die
-  `.venv/bin` des Projekts und `~/.local/bin`.
-- Linux oder macOS mit interaktivem Terminal. Für den Build werden Rust/Cargo ab 1.88
-  und ein C-Compiler für SQLite benötigt.
-- Optional `tmux` für Hintergrundaufträge und Wiederverbindung, `ssh` für
-  direkte SSH-, Tunnel- und Docker-Aktionen sowie `nano` für den Compose-Editor.
+### 1. Controller vorbereiten
 
-## Auf Linux installieren und aktualisieren
-
-Der Installer benötigt Git, Rust/Cargo ab 1.88, einen C-Compiler und
-`flock` aus util-linux. Auf Debian liefert `build-essential` den Compiler.
-Ansible oder ansible-core muss bereits installiert sein. Der Installer läuft
-unter dem Konto, das Ansible TUI später verwendet.
+Führe die Schritte auf dem Linux-Controller aus, auf dem dein Ansible-Projekt
+liegt. Verwende für Installation, Start und Updates dasselbe Benutzerkonto.
+Die folgenden Paketbefehle benötigen Root-Rechte. Wenn du bereits als Root
+angemeldet bist, lass `sudo` weg.
 
 ```bash
-git clone --branch v0.2.1 https://github.com/v4z00/Ansible-TUI.git
-cd Ansible-TUI
-bash install.sh --project /pfad/zum/ansible-projekt
-export PATH="$HOME/.local/bin:$PATH"
+sudo apt update
+sudo apt install git curl ca-certificates build-essential util-linux
 ```
 
-`--inventory inventory.yml` kann bei der Erstkonfiguration ein Inventory
-festlegen. Relative Pfade beziehen sich auf das Ansible-Projekt. Eine bereits
-vorhandene Konfiguration wird für die Installation verwendet. Über
-`ANSIBLE_TUI_CONFIG` kannst du für Setup und Programm gemeinsam eine andere
-Konfigurationsdatei auswählen.
+Ansible TUI benötigt eine vorhandene Installation von Ansible oder ansible-core.
+Wenn dein Controller noch kein Ansible hat, kannst du es unter Debian mit
+`sudo apt install ansible-core` ergänzen. Prüfe die beiden Programme mit
+`ansible-playbook --version` und `ansible-inventory --version`. Liegt Ansible
+in `.venv/bin` des Projekts, findet Ansible TUI diese Programme dort.
 
-Danach prüfst und startest du Updates mit demselben Installer.
+Rust und Cargo müssen mindestens Version 1.88 haben. Prüfe das mit
+`rustc --version` und `cargo --version`. Falls Rust fehlt oder zu alt ist,
+installiere die stabile Rust-Toolchain nach der [Rustup-Anleitung](https://rust-lang.org/install/).
+Öffne danach ein neues Terminal und prüfe die Versionen erneut.
+
+### 2. Ansible TUI installieren
+
+Kopiere den folgenden Block und setze bei `ansible_project` den absoluten Pfad
+deines vorhandenen Ansible-Projekts ein.
 
 ```bash
+ansible_project='/pfad/zum/ansible-projekt'
+git clone --branch v0.2.1 https://github.com/v4z00/Ansible-TUI.git &&
+  cd Ansible-TUI &&
+  bash install.sh --project "$ansible_project" &&
+  export PATH="$HOME/.local/bin:$PATH" &&
+  ansible-tui --version
+```
+
+Der Installer wählt den neuesten numerischen GitHub-Tag `vX.Y.Z` und baut die
+Anwendung lokal. Der erste Build kann ein paar Minuten dauern. Die Befehle
+`ansible-tui` und `ansible-tui-setup` landen in `~/.local/bin`.
+
+Wenn dein Projekt ein separates Inventory benötigt, ergänze beim ersten
+Installer-Aufruf `--inventory inventory.yml`. Relative Inventory-Pfade
+beziehen sich auf das Ansible-Projekt. Eine vorhandene Konfiguration wird
+weiterverwendet. Der Standardpfad ist `~/.config/ansible-tui/config.json`.
+Mit `ANSIBLE_TUI_CONFIG` kannst du einen anderen Pfad für Installer, Dienst
+und Oberfläche festlegen.
+
+### 3. Dienst und Oberfläche starten
+
+Starte den Dienst im ersten Terminal.
+
+```bash
+ansible-tui serve
+```
+
+Lass dieses Terminal offen und starte die Oberfläche in einem zweiten
+Terminal oder einer zweiten SSH-Verbindung zum selben Controller.
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+ansible-tui
+```
+
+Mit `Ctrl+Q` schließt du die Oberfläche. Mit `Ctrl+C` im ersten Terminal
+beendest du den Dienst. Wenn du einen eigenen Konfigurationspfad verwendest,
+muss er in beiden Terminals gleich sein.
+
+## Über GitHub aktualisieren
+
+Führe die folgenden Befehle unter demselben Konto aus, das Ansible TUI
+installiert hat.
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
 ansible-tui-setup --check
 ansible-tui-setup
+ansible-tui --version
 ```
 
-Das Setup wählt den neuesten numerischen GitHub-Tag `vX.Y.Z`. Mit
-`--version vX.Y.Z` kannst du eine bestimmte Version ab der installierten
-Version auswählen. `--check` zeigt die Auswahl ohne Build an. Die neue Version
-wird lokal mit der Cargo-Lockdatei gebaut. Bei einem Fehler bleibt der bisherige
-Befehl aktiv. Vorherige Versionen liegen weiterhin unter
-`~/.local/opt/ansible-tui/releases/`. Ein laufender Dienst übernimmt beim
-nächsten geplanten Neustart die installierte Version.
+`--check` zeigt die installierte und die verfügbare Version. Optional kannst du
+mit `--version vX.Y.Z` einen bestimmten Tag ab der installierten Version
+auswählen. Der Installer übernimmt den neuen Build erst nach erfolgreicher
+Prüfung. Vorherige Versionen liegen unter
+`~/.local/opt/ansible-tui/releases/`. Wenn der Dienst bereits läuft, starte ihn
+zu einem passenden Zeitpunkt über `ansible-tui serve` neu, damit er die neue
+Version verwendet.
 
-Starte den lokalen Dienst mit `ansible-tui serve`. Öffne in einem zweiten
-Terminal die Oberfläche mit `ansible-tui`. `Ctrl+Q` schließt die Oberfläche.
-Wer mehrere Projekte verwaltet, kann mit `--config /pfad/zur/config.json` vor
-dem Unterbefehl eine eigene Konfigurationsdatei angeben. Der lokale Dienst und die
-Oberfläche müssen dieselbe Konfiguration verwenden.
+## Projekte und Bedienung
 
 Bei einem Standardprojekt findest du YAML-Dateien aus dem Projektstamm und
 `playbooks/` unter **Ansible → Playbooks**. Wähle das Playbook, ein optionales
@@ -71,9 +111,11 @@ Befehle und die Markdown-Beschreibungen unter `descriptions/`.
 
 ## Einstellungen
 
-Taste **9** öffnet die Einstellungen. Docker und tmux starten bei einer neuen
-Konfiguration ausgeschaltet. Mit `init --docker --tmux` oder über die Oberfläche
-kannst du sie aktivieren.
+Taste **9** öffnet die Einstellungen. Für die tmux-Integration muss `tmux` auf
+dem Controller installiert sein (Debian: `sudo apt install tmux`). SSH- und
+Docker-Aktionen benötigen den SSH-Client, der Compose-Editor verwendet `nano`.
+Docker und tmux sind nach der Erstinstallation ausgeschaltet. Du kannst sie
+in den Einstellungen aktivieren.
 
 | Schalter | Wirkung |
 | --- | --- |
