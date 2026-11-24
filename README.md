@@ -2,6 +2,8 @@ Hallöchen, mit Ansible TUI bediene ich Ansible direkt im Terminal. Ich kann Pla
 
 Die TUI entsteht mit KI-Unterstützung und ist noch in Entwicklung. Wenn dir beim Ausprobieren etwas auffällt, schreib mir gern ein Issue. Die Lizenzfrage ist noch offen.
 
+Ich entwickle und teste auf `staging`. Freigegebene Änderungen kommen nach `main`.
+
 - [Auf Debian installieren und zum ersten Mal starten](descriptions/installation.md)
 - [So sieht die TUI aus – Ansicht und Tastenkürzel](descriptions/oberflaeche.md)
 - [Betrieb](docs/BETRIEB.txt) · [API](API.txt) · [Entwicklung und Tests](descriptions/entwicklung.txt)
