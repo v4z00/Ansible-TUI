@@ -1,8 +1,8 @@
 # Ansible TUI
 
 > **Work in Progress · Noch nicht live geschaltet.**
-> Dieser Stand dient der Entwicklung und lokalen Tests. Die Abnahme auf einem
-> Debian-Controller und in Remote Desktop Manager steht aus.
+> Dieser Stand dient der Entwicklung und lokalen Tests. Erste Tests auf einem
+> Debian-Controller und in Remote Desktop Manager sind erfolgt.
 
 Ansible TUI ist eine Terminaloberfläche für vorhandene Ansible-Projekte.
 Sie zeigt Inventory und Playbooks, bereitet Aufträge mit einer Vorschau vor
@@ -42,7 +42,7 @@ deines vorhandenen Ansible-Projekts ein.
 
 ```bash
 ansible_project='/pfad/zum/ansible-projekt'
-git clone --branch v0.2.1 https://github.com/v4z00/Ansible-TUI.git &&
+git clone --branch v0.2.2 https://github.com/v4z00/Ansible-TUI.git &&
   cd Ansible-TUI &&
   bash install.sh --project "$ansible_project" &&
   export PATH="$HOME/.local/bin:$PATH" &&

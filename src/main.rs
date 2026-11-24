@@ -39,7 +39,7 @@ enum Action {
     /// Interner Platzhalter fuer die verwaltete tmux-Sitzung
     #[command(hide = true)]
     Idle,
-    /// Tmux-Sitzungen auf MJH- und Standard-Socket auflisten
+    /// Tmux-Sitzungen auf Ansible-TUI- und Standard-Socket auflisten
     Tmux,
     /// TUI im aktuellen Terminal
     Ui,

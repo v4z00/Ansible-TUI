@@ -1426,7 +1426,7 @@ fn draw(f: &mut Frame, m: &mut Model, cfg: &Config) -> Screen {
         area,
     );
     if area.width < 60 || area.height < 20 {
-        f.render_widget(Paragraph::new("MJH · Terminal zu klein\n\nMindestens 60 Spalten und 20 Zeilen.\nFenster vergroessern oder Schrift verkleinern.\nStrg+Q schliesst nur die Oberflaeche.").wrap(Wrap{trim:false}).style(Style::default().fg(WARN)),area);
+        f.render_widget(Paragraph::new("Ansible TUI · Terminal zu klein\n\nMindestens 60 Spalten und 20 Zeilen.\nFenster vergroessern oder Schrift verkleinern.\nStrg+Q schliesst nur die Oberflaeche.").wrap(Wrap{trim:false}).style(Style::default().fg(WARN)),area);
         return screen;
     }
     let chunks = Layout::vertical([
@@ -1438,8 +1438,7 @@ fn draw(f: &mut Frame, m: &mut Model, cfg: &Config) -> Screen {
     let header = Layout::horizontal([Constraint::Min(12), Constraint::Length(28)]).split(chunks[0]);
     f.render_widget(
         Paragraph::new(Line::from(vec![
-            Span::styled("  mjh", Style::default().fg(ACCENT).bold()),
-            Span::styled("  /  ANSIBLE TUI", Style::default().fg(TEXT)),
+            Span::styled("  ANSIBLE TUI", Style::default().fg(ACCENT).bold()),
             Span::styled(
                 format!("  {}", env!("CARGO_PKG_VERSION")),
                 Style::default().fg(MUTED),

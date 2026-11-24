@@ -93,12 +93,12 @@ SQLite erhaelt additive Tabelle job_acknowledgements(job,at), user_version2;
 keine bestehenden job-Spalten umbenannt/entfernt. Keine neue Pflegequelle.
 
 Tmux0.1.7: tmux.list -> {servers:[{label,available,sessions:[{id,name,windows,
- clients,socket}]}],output}. MJH- und Standard-Socket, unbekannte private Sockets
+ clients,socket}]}],output}. Ansible-TUI- und Standard-Socket, unbekannte private Sockets
  nicht durchsucht. Rein lesend; fehlender Server liefert available:false.
-CLI ansible-tui tmux benoetigt keinen laufenden MJH-API-Dienst.
+CLI ansible-tui tmux benoetigt keinen laufenden Ansible-TUI-Dienst.
 Startmodus ist eine TUI-Entscheidung bei der Vorschau. Der API-Auftrag bleibt
  derselbe; Vordergrund bedeutet danach die zurueckgelieferte Pane oeffnen.
-Dienst beendet nur MJH-Sitzung ohne aktive/unklare Jobs, UI oder Clients und ohne
+Dienst beendet nur die Ansible-TUI-Sitzung ohne aktive/unklare Jobs, UI oder Clients und ohne
  fremde/unbekannte Fenster. Naechster UI-/Jobstart erstellt fehlende Sitzung.
 
 

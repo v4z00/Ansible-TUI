@@ -1,4 +1,4 @@
-ANSIBLE TUI 0.2.1 - BETRIEBSANLEITUNG
+ANSIBLE TUI 0.2.2 - BETRIEBSANLEITUNG
 WORK IN PROGRESS. NOCH NICHT LIVE GESCHALTET.
 
 Linux-Installation, GitHub-Updates und Ansible-Voraussetzungen stehen in README.md.
@@ -220,7 +220,7 @@ terminale Ausgabe verschwindet dann; DB-Ergebnisse/Quittierungen/Dateilogs bleib
 Fremde Sitzungen und nicht zugeordnete Fenster bleiben geschuetzt.
 Neue Sitzungen verwenden einen internen Platzhalter statt einer Benutzershell.
 Beim naechsten ansible-tui oder Jobstart wird eine fehlende Sitzung neu angelegt.
-Der MJH-Dienst bleibt aktiv, damit Wiederaufruf und Hintergrundabfragen gehen.
+Der Ansible-TUI-Dienst bleibt aktiv, damit Wiederaufruf und Hintergrundabfragen gehen.
 Unter Sitzungen: Oeffnen, Abbrechen (Ctrl+C), Ausgabeprotokoll und Log lesen.
 Opt-in Ausgabeprotokolle: nur Ausgabe, 5 x10 MiB Rotation pro Auftrag. Auch
 Ausgabe kann vertraulich sein. Keine pauschale Terminal-Eingabeaufzeichnung.
@@ -272,7 +272,7 @@ und Dateilogs bleiben erhalten. Alle Leer-/Schliessaktionen haben eine Vorschau.
 Keine dieser Aktionen entfernt Ansible- oder Dockerlogs auf den Zielsystemen.
 
 DOCKER-DEPLOYMENT: EINGABEN UND HINTERGRUND
-Standardmaessig bestaetigt MJH nur die belegte reine Enter-Zusammenfassung
+Standardmaessig bestaetigt Ansible TUI nur die belegte reine Enter-Zusammenfassung
 (TASK 9.3 des vorhandenen Deployments) automatisch nach einer Sekunde Anzeige.
 Echte Auswahl-/Loeschfragen bleiben manuell, feste Zeitpausen bleiben erhalten.
 Der Adapter sendet keine allgemeinen Enter-/Ja-Antworten an das Terminal.
