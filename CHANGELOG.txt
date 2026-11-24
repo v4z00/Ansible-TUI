@@ -1,4 +1,6 @@
-0.2.2 - 24.11.2026
+0.2.2 - 24.11.2026 – Mein Start mit GitHub
+Mit 0.2.2 bekommt Ansible TUI hier auf GitHub einen eigenen Release-Eintrag. In der Oberfläche wähle ich ein Playbook, prüfe die Zielhosts und sehe später, wie der Lauf ausgegangen ist.
+
 - Einheitlicher Name Ansible TUI in Oberflaeche, CLI-Hilfe und Dokumentation.
 
 0.2.1 - 24.11.2026
