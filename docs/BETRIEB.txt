@@ -1,7 +1,8 @@
-ANSIBLE TUI 0.2.0 - BETRIEBSANLEITUNG
+ANSIBLE TUI 0.2.1 - BETRIEBSANLEITUNG
 WORK IN PROGRESS. NOCH NICHT LIVE GESCHALTET.
 
-Installation, Ansible-Voraussetzungen und Projektwahl stehen in README.md.
+Linux-Installation, GitHub-Updates und Ansible-Voraussetzungen stehen in README.md.
+ansible-tui-setup --check zeigt die installierte und verfuegbare Version.
 Programmstart: ansible-tui. Dienst im eigenen Terminal: ansible-tui serve.
 Bei aktiver tmux-Integration laufen Auftraege im privaten tmux-Socket.
 Ohne tmux laufen Auftraege im aktuellen Terminal, mit Ergebnis im Verlauf.

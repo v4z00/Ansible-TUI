@@ -21,20 +21,43 @@ Schreiben und Testen des Codes.
 - Optional `tmux` für Hintergrundaufträge und Wiederverbindung, `ssh` für
   direkte SSH-, Tunnel- und Docker-Aktionen sowie `nano` für den Compose-Editor.
 
-## Lokal ausprobieren
+## Auf Linux installieren und aktualisieren
 
-Im Checkout den Build installieren und die Konfiguration für ein vorhandenes
-Testprojekt anlegen. `--inventory` ist optional und überschreibt für Standardprojekte
-das Ansible-Inventory. Relative Inventory-Pfade beziehen sich auf den Projektordner.
+Der Installer benötigt Git, Rust/Cargo ab 1.88, einen C-Compiler und
+`flock` aus util-linux. Auf Debian liefert `build-essential` den Compiler.
+Ansible oder ansible-core muss bereits installiert sein. Der Installer läuft
+unter dem Konto, das Ansible TUI später verwendet.
 
 ```bash
-cargo install --locked --path .
-ansible-tui init --project /pfad/zum/ansible-projekt --inventory inventory.yml
-ansible-tui validate
-ansible-tui serve
+git clone --branch v0.2.1 https://github.com/v4z00/Ansible-TUI.git
+cd Ansible-TUI
+bash install.sh --project /pfad/zum/ansible-projekt
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-In einem zweiten Terminal `ansible-tui` starten. `Ctrl+Q` schließt die Oberfläche.
+`--inventory inventory.yml` kann bei der Erstkonfiguration ein Inventory
+festlegen. Relative Pfade beziehen sich auf das Ansible-Projekt. Eine bereits
+vorhandene Konfiguration wird für die Installation verwendet. Über
+`ANSIBLE_TUI_CONFIG` kannst du für Setup und Programm gemeinsam eine andere
+Konfigurationsdatei auswählen.
+
+Danach prüfst und startest du Updates mit demselben Installer.
+
+```bash
+ansible-tui-setup --check
+ansible-tui-setup
+```
+
+Das Setup wählt den neuesten numerischen GitHub-Tag `vX.Y.Z`. Mit
+`--version vX.Y.Z` kannst du eine bestimmte Version ab der installierten
+Version auswählen. `--check` zeigt die Auswahl ohne Build an. Die neue Version
+wird lokal mit der Cargo-Lockdatei gebaut. Bei einem Fehler bleibt der bisherige
+Befehl aktiv. Vorherige Versionen liegen weiterhin unter
+`~/.local/opt/ansible-tui/releases/`. Ein laufender Dienst übernimmt beim
+nächsten geplanten Neustart die installierte Version.
+
+Starte den lokalen Dienst mit `ansible-tui serve`. Öffne in einem zweiten
+Terminal die Oberfläche mit `ansible-tui`. `Ctrl+Q` schließt die Oberfläche.
 Wer mehrere Projekte verwaltet, kann mit `--config /pfad/zur/config.json` vor
 dem Unterbefehl eine eigene Konfigurationsdatei angeben. Der lokale Dienst und die
 Oberfläche müssen dieselbe Konfiguration verwenden.
@@ -69,11 +92,16 @@ und der [lokalen API-Dokumentation](API.txt).
 
 ## Entwicklung
 
+Für einen direkten Build aus einem Checkout eignet sich
+`cargo install --locked --path .`. Diese Installation wird von Cargo verwaltet.
+Die Erstkonfiguration kann mit `ansible-tui init --project PFAD` angelegt werden.
+
 ```bash
 cargo fmt --check
 cargo test --locked
 cargo clippy --locked --all-targets -- -D warnings
 cargo build --locked
+python3 tests/installer.py  # Linux
 python3 tests/standalone.py --binary target/debug/ansible-tui
 python3 tests/integration.py --binary target/debug/ansible-tui --tmux "$(command -v tmux)"
 python3 tests/lifecycle.py --binary target/debug/ansible-tui --tmux "$(command -v tmux)"

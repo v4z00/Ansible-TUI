@@ -1,3 +1,8 @@
+0.2.1 - 24.11.2026
+- Gemeinsamer Linux-Installer und GitHub-Updater fuer numerische Versionstags.
+- ansible-tui-setup --check zeigt den verfuegbaren Stand. Updates wechseln
+  atomar auf den geprueften Build. Bestehender lokaler Zustand bleibt nutzbar.
+
 0.2.0 - 24.11.2026
 - Eigener Projektname Ansible TUI und eigener Git-Checkout.
 - Lokale Initialisierung, Ansible-Voraussetzungscheck und Standardprojekte
