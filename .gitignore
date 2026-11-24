@@ -1,0 +1,15 @@
+/target/
+/.cargo/
+/.venv/
+__pycache__/
+*.pyc
+*.sqlite*
+*.log
+.DS_Store
+.env
+.env.*
+config.json
+preferences.json
+*.sock
+*.pem
+*.key

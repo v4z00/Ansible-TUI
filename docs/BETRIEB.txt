@@ -1,0 +1,320 @@
+ANSIBLE TUI 0.2.0 - BETRIEBSANLEITUNG
+WORK IN PROGRESS. NOCH NICHT LIVE GESCHALTET.
+
+Installation, Ansible-Voraussetzungen und Projektwahl stehen in README.md.
+Programmstart: ansible-tui. Dienst im eigenen Terminal: ansible-tui serve.
+Bei aktiver tmux-Integration laufen Auftraege im privaten tmux-Socket.
+Ohne tmux laufen Auftraege im aktuellen Terminal, mit Ergebnis im Verlauf.
+Mit Taste9 lassen sich Docker, tmux und direktes SSH getrennt schalten.
+Nach Wechsel des tmux-Modus die Oberflaeche neu oeffnen.
+
+BEDIENUNG MIT MAUS UND TASTATUR
+Links stehen die Arbeitsbereiche. Alle gezeichneten Schaltflaechen sind direkt
+anklickbar; Listen: Klick waehlt, Doppelklick oeffnet. Mausrad scrollt. Dropdowns
+und Checkboxlisten sowie Vorschau/Starten/Abbrechen sind per Maus bedienbar.
+Bei kleiner Breite macht Mehr ... alle weiteren Aktionen erreichbar.
+Tab/Shift+Tab wechseln Navigation, Reiter (Ansible/Docker), Liste und Aktionsleiste.
+In Navigation Oben/Unten, Rechts/Enter geht zu Reitern bzw. Liste. Reiter mit
+Links/Rechts wechseln, Enter/Abwaerts geht zur Liste. Listen: Oben/Unten,
+BildAuf/BildAb/Pos1/Ende, Enter oeffnet. Rechts geht zur Aktionsleiste; dort
+Links/Rechts waehlen und Enter aktiviert. Links aus der Liste geht zur Navigation.
+/ sucht, Esc setzt die Suche zurueck bzw. wechselt zur Navigation.
+1 Uebersicht, 2 Ansible, 3 Hosts, 4 Docker, Ctrl+R aktualisieren,
+5 Sitzungen, 6 Verlauf, 7 Hilfe. Ctrl+Q schliesst die Verwaltung und trennt deren Clients; Jobs laufen weiter.
+Minimum 60 Spalten/20 Zeilen, fuer den Alltag mindestens 100x30 empfohlen.
+
+HOTKEYS OHNE F-TASTEN / MAC
+1..7 waehlen die Arbeitsbereiche; 9 oeffnet 99_Einstellungen.
+Ctrl+K oder : oeffnet alle Aktionen des aktuellen Bereichs.
+Ctrl+G zeigt die Tastenhilfe auch aus Eingabedialogen; Esc schliesst nur diese.
+? funktioniert ausserhalb von Eingaben, 7 oeffnet die Hilfeseite.
+Ctrl+R aktualisiert; Ctrl+N/P wechselt Ansiblekategorien bzw. Dockerhosts.
+Ansible: Ctrl+D Beschreibung, Ctrl+T vorhandener Terminalablauf.
+Hosts: Enter SSH, Ctrl+D Docker, Ctrl+T Tunnel.
+Docker: Ctrl+O Hostauswahl, Ctrl+L Logs, Ctrl+E Shell, Ctrl+D Details,
+Ctrl+V CPU/RAM, Ctrl+W Compose, Ctrl+S Start, Ctrl+X Stopp, Ctrl+Y Neustart.
+Sitzungen: Enter Terminal, Ctrl+X Abbruch, Ctrl+P Ausgabeprotokoll, Ctrl+O Log.
+Ctrl+A Fehler quittieren, Ctrl+L Ausgabelog leeren, Ctrl+W beendetes Terminal schliessen.
+Verlauf: Ctrl+L Verlauf leeren. Alle neuen Aktionen zeigen zuerst eine Vorschau.
+Aenderungen bleiben hinter der Vorschau. Keine F-Tasten erforderlich.
+
+BUCHSTABENSPRUNG WIE IM DATEIEXPLORER
+In Listen und Auswahldialogen springt O zum passenden Namen. Wiederholtes O
+wechselt zum naechsten O-Eintrag, am Ende wieder zum ersten. Schnell getippte
+weitere Buchstaben verfeinern den Praefix; nach einer Sekunde beginnt ein neuer.
+Gross-/Kleinschreibung wird ignoriert. Die Liste bleibt vollstaendig; ein
+Buchstabe startet keine Aktion. Maus und Pfeile bleiben parallel verwendbar.
+/ aktiviert ausdruecklich die Filtereingabe; dort ist Text normaler Suchtext.
+In Auswahldialogen beendet Esc zuerst den Filter, danach den Dialog.
+In Formular- und Texteingabefeldern bleiben Buchstaben normale Eingaben.
+
+DIALOGE UND TEXT
+Auswahllisten: Pfeile, Pos1/Ende, BildAuf/BildAb, Buchstaben springen; / aktiviert den Filter.
+Space markiert Mehrfachauswahl, Enter uebernimmt. Tab/Shift+Tab erreicht auch
+Uebernehmen, Abbrechen und Inventory laden; Links/Rechts waehlt den Button.
+Formular: Tab geht durch Felder und danach ALLE Schaltflaechen. Shift+Tab
+zurueck, Oben/Unten durch Felder. Eingabe: Links/Rechts bewegt den sichtbaren
+Cursor |, Pos1/Ende springt, Backspace/Entf loescht ein Zeichen. Ctrl+U leert
+das ganze Feld. Vorlagen Ctrl+T, Vorschau Ctrl+P. Ja/Nein mit Space oder Links/Rechts.
+Bei Bestimmungen bleibt Enter zunaechst auf Zurueck; Tab/Links/Rechts waehlt
+Starten. Gehaltene Pfeiltasten navigieren weiter, gehaltene Aktionstasten
+bestaetigen nicht wiederholt. Ctrl+Q schliesst die TUI und kehrt zum aufrufenden Terminal zurueck. Auftraege bleiben.
+
+FARBEN UND RUECKMELDUNGEN
+Gruen / [ok]: Erfolg bzw. erreichbarer Dockerhost.
+Gelb / [>] oder [...]: laufend, wartend oder noch unklar.
+Rot / [!]: Fehler, einschliesslich Exitcode bei fehlgeschlagenen Aufgaben.
+Hostreiter zeigen diese Statusfarben und zusaetzliche Symbole/Containeranzahl.
+Navigation zeigt bei ausreichender Hoehe die Auftrags-/Problemzahlen direkt
+unter Ansible, Docker und Sitzungen. Erfolgs-/Fehlerzahlen beziehen sich auf die
+aktuell geladene Jobliste, keine ungelesen-Zaehler. Aktiver Fokus und Auswahl
+werden hervorgehoben, die Fusszeile zeigt passende Tasten fuer den Bereich.
+Neue Abschluesse bereits bekannter laufender Aufgaben werden acht Sekunden
+angezeigt. Bestehende Fehlermeldungen haben Vorrang; ein initialer Import alter
+Verlaufseintraege erzeugt keine Abschlussmeldungen. Keine blinkenden Effekte.
+
+HOSTS UND DOCKER
+Unter Hosts auf Inventory laden klicken oder Ctrl+R druecken. Das fuehrt bewusst
+ansible-inventory aus, dessen Plugins auch APIs ansprechen koennen. Im Konfigurator startet die bewusste Auswahl des Zielfelds ebenfalls diesen
+Inventoryaufruf; es gibt keinen periodischen Hintergrund-Inventorylauf. Laden, Fehler und leere Ergebnisse sind unterscheidbar.
+Der Dienst beruecksichtigt Projekt-.venv/bin und ~/.local/bin fuer lokale Werkzeuge;
+eine interaktive Zsh-/Bash-Konfiguration wird nicht im Dienst ausgefuehrt.
+Auch Inventoryhosts ohne eigene _meta.hostvars werden angezeigt.
+DOCKER-DEPLOYMENTHOSTS UND REITER
+Beim Oeffnen von Docker ermittelt der Dienst die Hosts asynchron aus dem
+aufgeloesten Inventory. Fuehrend ist docker_deployment_hosts, einschliesslich
+Kindgruppen. Im Bestand erzeugt der Generator diese Gruppe aus Tag docker und
+beruecksichtigt deployment-exclude. Keine zweite Hostliste und kein pauschales
+Scannen aller Rechner mit Docker-Tags. Bei anderer Struktur docker_group setzen.
+Ein Klick auf den Hostreiter zeigt seine Container aus dem Dienstcache.
+[ und ] oder < und > wechseln Hosts. Alle/Host waehlen oeffnet die vollstaendige
+suchbare Hostliste, auch bei schmalen Terminals und langen Hostnamen.
+[Zahl] im Reiter ist die Containeranzahl, [...] wartet noch, [!] meldet Fehler.
+Die jeweilige Containeransicht zeigt Host, Zustand und Zeit des letzten Erfolgs.
+Bei Fehlern bleibt ein vorhandener letzter Stand als solcher erkennbar; neue
+Hosts ohne Ergebnis zeigen Laden bzw. Fehler statt einer erfundenen leeren Liste.
+Hostwechsel leert zuerst die alte Containeransicht. Aus der Gruppe entfernte
+Hosts werden beim naechsten Inventoryabgleich aus Reitern/Cache entfernt.
+
+Der Dienst fragt die bekannten Deployment-Hosts auch ohne geoeffnete TUI weiter
+ab: standardmaessig alle 15 Sekunden nach Abschluss einer Abfrage, maximal vier
+gleichzeitig. Langsame Hosts blockieren weder andere Hosts noch die lokale API.
+Hostreiter lesen nur Zusammenfassungen, der gewaehlte Host seinen Containercache;
+mehrere TUIs vervielfachen die SSH-Statusabfragen nicht. Cache ist fluechtig im
+Dienst-RAM. Nach Dienstneustart ermittelt das Oeffnen des Dockerbereichs neu.
+Ctrl+R/Hosts neu laden erneuert die Inventoryzuordnung explizit. Das Inventory wird
+nicht periodisch neu ausgewertet; Containerstatus dagegen schon. Abfragen
+verwenden SSH BatchMode, keine Passwortdialoge in Hintergrundprozessen.
+Logs, Shell, Details, CPU/RAM, Composequellen, Start/Stopp/Neustart bleiben als
+bestehende Aktionen erhalten. Aenderungsaktionen haben weiterhin eine Vorschau.
+Einzelne Hosts ausserhalb der Gruppe bleiben auf der Hosts-Seite bewusst ueber
+Docker erreichbar, werden aber nicht automatisch im Dienstpool abgefragt.
+
+OPTIONALE EINSTELLUNGEN IN der lokalen config.json
+  "docker_group": "docker_deployment_hosts",
+  "docker_refresh_seconds": 15,
+  "docker_parallel": 4
+Diese Werte ergaenzen das vorhandene JSON-Objekt als Startvorgaben. Nach dem
+Speichern in 99_Einstellungen haben die dortigen Werte Vorrang. Grenzen: Intervall 5..86400
+Sekunden, Parallelitaet 1..16. Alte Konfigurationen nutzen automatisch Startvorgaben;
+der Installer ueberschreibt sie nicht. Nach eigenen Konfigurationsaenderungen
+den lokalen Dienst neu starten.
+Sonder-SSH-Optionen werden in dieser Version weiterhin nicht still ignoriert;
+unsupported Zugriffe werden erklaert. Der bestehende Ansible-Aufruf bleibt nutzbar.
+
+ANSIBLE, FORMULARE UND REFERENZEN
+Befehle, Rollen, Playbooks und Einstellungen ueber die sichtbaren Reiter waehlen.
+Enter/Oeffnen zeigt den Konfigurator fuer dokumentierte Befehle oder den
+bestehenden Terminalablauf. Rollen/Playbooks/Konfiguration bleiben Referenzen.
+Ctrl+D zeigt die lesbare Anleitung. Ctrl+N/P wechselt die Referenzkategorie.
+KONFIGURATOR: BEISPIEL BASE
+1. Ansible -> Befehle -> base -> Oeffnen/Enter.
+2. Ziele (--limit) anklicken oder Enter: Inventory bei Bedarf laden, dann Hosts
+   oder Gruppen suchen und mit Checkbox/Leertaste markieren. Uebernehmen/Enter.
+3. Alternativ Alle Ziele (--all) setzen; bei Base genau eine der Optionen
+   verwenden. Sonst meldet die Vorschau den Widerspruch vor dem Start.
+4. Vorschau/Ctrl+P kontrollieren, erst Starten erzeugt einen tmux-Auftrag.
+Tab/Pfeile wechseln Felder; Klick/Enter oeffnet eine Auswahl, Leertaste schaltet
+Ja/Nein. Die Auswahl ist durchsuchbar; auch Gruppen nach dem 50. Eintrag sind
+verfuegbar. Inventory laden erneuert die Zielvorschlaege im offenen Dialog.
+
+AUTOMATISCHE ZIELVORGABEN
+Beim Oeffnen eines geprueften --limit-Formulars ermittelt das Add-on eine
+Vorauswahl aus den tatsaechlichen Playbooks, die die bestehende Commandregistry
+unter requires nennt. Es gibt keine separat gepflegte Befehls-/Zielliste.
+Beispiele im vorhandenen Bestand: base/updates -> all_linux_systems;
+docker-deploy -> docker_deployment_hosts. Die jeweilige Gruppe wird erst nach
+Aufloesung des Inventory uebernommen, wenn sie dort wirklich vorhanden ist.
+Nur eindeutige statische hosts:-Angaben werden verwendet. Mehrere verschiedene
+Gruppen, Jinja, dynamische Selektoren oder fehlende Belege ergeben keine Vorgabe.
+Controllerplays mit localhost werden bei der Zielableitung ausgelassen. Bestehende
+Playbookausschluesse wie :!opnsense_firewall bleiben durch Ansible wirksam.
+Es gibt niemals einen Ersatz durch all/--all; Windows wird nicht still als
+Linuxziel mit ausgewaehlt. Keine Auswahl behaupten, wenn die Gruppe fehlt.
+Die Herkunft steht sichtbar im Formular. Vorauswahl vor Vorschau aendern oder
+leeren; verspaetete Antworten ersetzen keine manuell bearbeiteten Werte.
+Normale Variablen-default/examples bleiben weiterhin bewusste Vorlagen, keine
+automatisch uebergebenen Werte. Nur die beauftragte Zielvorgabe ist vorausgewaehlt.
+Unter 99_Einstellungen kann die automatische Zielvorgabe ausgeschaltet werden.
+
+99_EINSTELLUNGEN (GANZ UNTEN / TASTE 9)
+Enter/Bearbeiten oeffnet das Formular. Vorschau Ctrl+P prueft und zeigt die Werte,
+Starten speichert. Sofort wirksame Einstellungen:
+- passende Zielgruppe vorauswaehlen: an/aus;
+- Dockerstatus automatisch laden: an/aus;
+- Docker-Zusammenfassung automatisch bestaetigen: an/aus (fuer neue Jobs);
+- Docker-Eingaben automatisch hervorholen: an/aus (sofort wirksam);
+- Dockerintervall: 5..86400 Sekunden;
+- gleichzeitige Dockerabfragen: 1..16;
+- Docker-Deploymentgruppe: Inventorygruppenname.
+Kleinere Parallelitaet oder Pause beendet keine laufende Abfrage und keinen Job.
+Eine andere Dockergruppe leert die geladene Zuordnung; danach neu ermitteln.
+Inventory leeren zeigt zuerst die Vorschau und leert ausschliesslich den
+RAM-Host-/Gruppen-/Docker-Cache. Inventory-Dateien und Einstellungen im Ansible-
+Projekt sowie laufende tmux-Jobs bleiben erhalten. Auch ein vorher gestarteter
+Ladevorgang darf den bewusst geleerten Cache nicht spaeter wieder fuellen.
+Inventory laden ermittelt neu; Neu laden liest die Einstellungen erneut.
+Die UI-Werte liegen mit Rechten0600 im eigenen Zustandsordner als preferences.json
+(Standard <state>/preferences.json). Sie bleiben ueber
+Updates und Dienstneustarts erhalten. Solange kein Wert gespeichert ist, gelten
+die Startvorgaben aus config.json; gespeicherte UI-Werte haben danach Vorrang.
+Fuer diese UI-Einstellungen ist kein Dienstneustart erforderlich.
+
+VARIABLENVORLAGEN
+Vorlagen/Ctrl+T zeigt default und examples aus der Ansible-Beschreibung des Felds.
+Erst die ausdrueckliche Uebernahme setzt den Wert. Keine erfundenen Defaults,
+keine Vorbelegung von --all und keine Beispiele fuer vertrauliche Angaben.
+Eigene Text-/Ganzzahleingaben sind weiter moeglich. Leeren/Ctrl+U entfernt einen
+Wert. Vorgegebene choices werden als Dropdown angeboten; Werte werden mit dem
+Originaltyp uebernommen. Ohne dokumentierte Vorlage erscheint ein Hinweis.
+Die Beschreibungen unter Ansible/descriptions bleiben die einzige Pflegequelle.
+Fehlende/veraltete Beschreibungen werden nicht durch geratenen Code ersetzt:
+Der vorhandene Terminalablauf bleibt nutzbar, ein falsches Formular wird gesperrt.
+Ctrl+P/Vorschau prueft die Eingaben. Fehlermeldungen stehen im Dialog.
+Die Oberflaeche und angezeigte deutsche Beschreibungen verwenden ae/oe/ue/ss;
+Befehlsnamen, Pfade und uebergebene Werte bleiben technisch unveraendert.
+Vorschau ist scrollbar. Tab/Links/Rechts waehlen Zurueck oder Starten, Enter
+ausfuehren; alternativ entsprechende Schaltflaeche anklicken. y bestaetigt wie zuvor.
+Keine Passwoerter/Tokens als Parameter eingeben; Originalterminal verdeckt nutzen.
+
+SITZUNGEN, LOGS UND TEAMMODUS
+Jobs laufen in eigenen tmux-Fenstern; das UI ist ebenfalls ein tmux-Fenster.
+ansible-tui open oeffnet eine Verwaltung, ansible-tui watch schaut ohne Eingaben zu.
+Ctrl+Q in der Verwaltung schliesst diese und trennt die dort angehaengten Clients.
+Der Aufruf ansible-tui kehrt zur aufrufenden Shell zurueck. Kein Umschalten zu Shell0,
+keine Voraussetzung einer lebenden Shell im tmux. Eine neue Verwaltung mit ansible-tui.
+Der tmux-Unterbau bleibt fuer vorhandene Auftraege unsichtbar bestehen;
+Ctrl+Q beendet keine laufenden Jobs und keinen tmux-Server. Andere Clients, die gerade
+andere Fenster/Sitzungen ansehen, bleiben angehaengt. Gemeinsam angehaengte
+Teilnehmer derselben Verwaltung werden beim Schliessen dieser UI getrennt.
+Direktaufruf ansible-tui ui ohne tmux beendet nur die TUI im aktuellen Terminal.
+Ctrl+B DRUECKEN, LOSLASSEN, danach w zeigt die Fensterauswahl.
+Dort Verwaltung waehlen. Wenn Verwaltung Fenster1 ist: Ctrl+B, loslassen, dann1.
+Eine Ziffer allein wechselt kein tmux-Fenster! Ctrl+B, loslassen, dann d trennt
+den Client. Am Auftragsende steht die tatsaechliche Verwaltungsnummer im Terminal.
+Ein beendetes Auftragsfenster behaelt seine Ausgabe bei geoeffneter Verwaltung.
+Sind keine Verwaltung, keine aktiven/unklaren Auftraege und keine angehaengten
+Clients mehr vorhanden, beendet der Dienst die Ansible-TUI-Sitzung automatisch. Verwaiste
+terminale Ausgabe verschwindet dann; DB-Ergebnisse/Quittierungen/Dateilogs bleiben.
+Fremde Sitzungen und nicht zugeordnete Fenster bleiben geschuetzt.
+Neue Sitzungen verwenden einen internen Platzhalter statt einer Benutzershell.
+Beim naechsten ansible-tui oder Jobstart wird eine fehlende Sitzung neu angelegt.
+Der MJH-Dienst bleibt aktiv, damit Wiederaufruf und Hintergrundabfragen gehen.
+Unter Sitzungen: Oeffnen, Abbrechen (Ctrl+C), Ausgabeprotokoll und Log lesen.
+Opt-in Ausgabeprotokolle: nur Ausgabe, 5 x10 MiB Rotation pro Auftrag. Auch
+Ausgabe kann vertraulich sein. Keine pauschale Terminal-Eingabeaufzeichnung.
+Ereignisse in SQLite maximal10000, Jobliste maximal500 Eintraege. Private
+Jobdateien enthalten notwendige Argumente. Kein automatischer Job-Retry.
+Tmux schuetzt nicht vor Server-/tmux-Neustart oder einem Fehler im Job selbst.
+
+VORDERGRUND ODER HINTERGRUND
+Die Startvorschau fuer Ansible/SSH/Tunnel/Docker/Compose bietet drei Buttons:
+Zurueck, Starten (Hintergrund), Vordergrund. Per Maus anklicken oder mit
+Tab/Shift+Tab/Links/Rechts waehlen und Enter ausfuehren. Anfangs ist Zurueck
+gewaehlt. Hintergrund bleibt in der Verwaltung; Vordergrund oeffnet sofort den
+neuen Auftrag im Terminal. Alle Aufgaben laufen unabhaengig davon in tmux.
+Echte Docker-Rueckfragen koennen auch Hintergrundjobs gemaess der Einstellung
+hervorholen. Vorschauen fuer Wartung/Quittierung haben keine Startmodusauswahl.
+
+TMUX-SITZUNGSUEBERSICHT
+Sitzungen -> Tmux-Sitzungen / Ctrl+T zeigt alle Sitzungen am konfigurierten
+Ansible-TUI-Socket und am Standard-Socket, mit Fenster- und Clientanzahl. Wenn kein
+Server/Sitzung erreichbar ist, wird das ausdruecklich angezeigt. Andere beliebig
+benannte/private Sockets werden nicht durchsucht. Die Ansicht ist lesend.
+Auch ohne TUI nutzbar: ansible-tui tmux. Neuer Aufruf aktualisiert die Liste.
+
+FEHLER ZUR KENNTNIS NEHMEN
+Sitzungen -> Auftrag waehlen -> Fehler quittieren / Ctrl+A -> Vorschau bestaetigen.
+Abgeschlossene Fehler/Abbrueche werden gruen als [ok] Quittiert (Exitcode)
+angezeigt und zaehlen nicht mehr als offene Fehler in den Bereichsanzeigen.
+Der technische Zustand failed/interrupted und der urspruengliche Exitcode bleiben
+unveraendert. Quittierung hat einen eigenen SQLite-Zeitstempel und bleibt ueber
+Dienstneustarts erhalten. Wiederholtes Quittieren erzeugt keine Doppeleintraege.
+Erfolgreiche, laufende und unklare Auftraege brauchen/erlauben keine Quittierung.
+Dies quittiert nur Auftragsfehler; echte aktuelle Host-/Dockerprobleme werden
+weiterhin aus den Abfragen angezeigt.
+
+LOGS UND BEENDETE TERMINALS AUFRAEUMEN
+Sitzungen -> Ausgabelog leeren / Ctrl+L entfernt das explizit aktivierte
+Ausgabelog des ausgewaehlten abgeschlossenen Auftrags samt vier Rotationen.
+Ergebnis, Quittierung, Ereignisverlauf und tmux-Ausgabe bleiben erhalten.
+Laufende/unklare Auftraege sind geschuetzt. Nicht angelegte/schon geleerte Logs
+koennen ebenfalls geleert werden. Private Generation/Dateisperre verhindert
+Nachfuellen durch alte gepufferte 0.1.7-Ausgabelogprozesse.
+Sitzungen -> Terminal schliessen / Ctrl+W entfernt gezielt dessen beendete Pane.
+Es werden weder andere Terminals noch laufende Auftraege beendet. Auftragszeile
+und vorhandene Dateilogs bleiben. Geschlossene Terminalausgabe ist danach nicht
+wiederherstellbar, sofern vorher kein Ausgabelog aktiviert wurde.
+Verlauf -> Verlauf leeren / Ctrl+L entfernt die strukturierten Ereignisse.
+Ein neuer Eintrag dokumentiert das bewusste Leeren. Ergebnisse, Quittierungen
+und Dateilogs bleiben erhalten. Alle Leer-/Schliessaktionen haben eine Vorschau.
+Keine dieser Aktionen entfernt Ansible- oder Dockerlogs auf den Zielsystemen.
+
+DOCKER-DEPLOYMENT: EINGABEN UND HINTERGRUND
+Standardmaessig bestaetigt MJH nur die belegte reine Enter-Zusammenfassung
+(TASK 9.3 des vorhandenen Deployments) automatisch nach einer Sekunde Anzeige.
+Echte Auswahl-/Loeschfragen bleiben manuell, feste Zeitpausen bleiben erhalten.
+Der Adapter sendet keine allgemeinen Enter-/Ja-Antworten an das Terminal.
+Bei echten Ansible-Eingaben wird das Auftragsfenster automatisch angezeigt,
+wenn diese Verwaltung aktiv ist, kein Dialog offen ist und gerade nicht getippt
+wird. Nach der Eingabe kehrt die Ansicht zur Verwaltung zurueck, solange du
+nicht selbst das Fenster gewechselt hast. Der Auftrag laeuft in tmux weiter.
+Die Sitzungsseite kennzeichnet anstehende Eingaben mit [?] Eingabe.
+Beide Funktionen sind unter99_Einstellungen getrennt abschaltbar. Die Enter-
+Option gilt fuer neue Jobs; Vordergrundautomatik kann sofort geaendert werden.
+
+Unterstuetzt: Ansible-TUI-Befehle docker-deploy und docker-deploy-all, Ansible-Core2.19
+oder2.20 und konfigurierte Standardstrategie linear. Andere Versionen/eigene
+Strategien behalten den bisherigen manuellen Terminalablauf. Explizite andere
+Strategien in einem Play koennen ebenfalls ausserhalb der Erkennung liegen.
+Die anfaenglichen Shellfragen von docker-deploy werden im Terminal gezeigt;
+beliebige externe Programmfragen werden nicht automatisch erkannt. Bei Bedarf
+unter Sitzungen mit Enter oeffnen oder Ctrl+B, loslassen, dann w verwenden.
+Der Strategieadapter liegt nur im Ansible-TUI-Zustandsordner und wird nur fuer diesen Auftrag
+per Umgebung gesetzt. Ansibleprojekt und ansible.cfg bleiben unveraendert.
+Private Phasenmarker enthalten Zustand/Token, keine Antworten/Prompts. Alle
+Teilnehmer einer gemeinsam verwendeten tmux-Sitzung teilen den Fensterwechsel.
+
+METADATEN: EINE PFLEGEQUELLE
+Markdown im angebundenen Ansible-Projekt unter descriptions/{commands,roles,
+playbooks,configurations}. Lesbare Anleitung und JSON-Block in derselben Datei.
+SQLite ist nur Cache; keine zweite gepflegte Beschreibungsliste im Add-on.
+Source-Hashes sperren veraltete Formulare, Control behaelt die fachlichen Pruefungen.
+Periodischer Refresh standardmaessig60 Sekunden. Import startet keine Skripte,
+Lookups oder Playbooks. Nicht installierte Befehle werden nicht angeboten.
+
+DIENST UND ERWEITERTE AUFRUFE
+ansible-tui serve                  lokaler Koordinator
+ansible-tui api '{"method":"status"}'
+ansible-tui validate               lokaler Katalogcheck
+ansible-tui ui                     TUI im aktuellen Terminal
+ansible-tui session                privaten tmux-Unterbau explizit anlegen
+ansible-tui tmux                   aktive Sitzungen auflisten
+API-Endpunkte und Antwortfelder sind in API.txt beschrieben.
+
+GRENZEN UND PRUEFUNG
+Keine Pixelgrafiken oder vollstaendige Portainer-Paritaet. Composequelle wird
+mit nano und privatem Vorherbild bearbeitet. Ressourcensperren betreffen nur
+Add-on-Jobs, nicht externe Shellprozesse. Keine vollstaendige revisionssichere
+Personenzuordnung in einer gemeinsam verwendeten Root-Sitzung.
+Der Pruefbericht ist dem Deploymentpaket beigefuegt; die Weiterarbeit wird im Staging dokumentiert.
