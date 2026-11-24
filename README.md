@@ -6,6 +6,8 @@ Die TUI entsteht mit KI-Unterstützung und ist noch in Entwicklung. Wenn dir bei
 
 Der Projektcode steht unter der [MIT-Lizenz](LICENSE). Für mitgelieferte Drittkomponenten gelten deren jeweilige Lizenzen.
 
+[Changelog](CHANGELOG.txt) · [GitHub-Releases](https://github.com/v4z00/Ansible-TUI/releases)
+
 Ich entwickle und teste auf `staging`. Freigegebene Änderungen kommen nach `main`.
 
 - [Auf Debian installieren und zum ersten Mal starten](descriptions/installation.md)
