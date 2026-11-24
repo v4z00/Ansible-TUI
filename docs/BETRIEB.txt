@@ -1,5 +1,5 @@
 ANSIBLE TUI 0.2.3 - BETRIEBSANLEITUNG
-WORK IN PROGRESS. NOCH NICHT LIVE GESCHALTET.
+Ansible TUI ist in Entwicklung.
 
 Linux-Installation, Voraussetzungen und Updates: descriptions/installation.md.
 Terminalansicht, Navigation und Scrollen: descriptions/oberflaeche.md.
@@ -7,7 +7,7 @@ ansible-tui-setup --check zeigt die installierte und verfuegbare Version.
 Programmstart: ansible-tui. Dienst im eigenen Terminal: ansible-tui serve.
 Bei aktiver tmux-Integration laufen Auftraege im privaten tmux-Socket.
 Ohne tmux laufen Auftraege im aktuellen Terminal, mit Ergebnis im Verlauf.
-Mit Taste9 lassen sich Docker, tmux und direktes SSH getrennt schalten.
+Mit Taste 9 lassen sich Docker, tmux und direktes SSH getrennt schalten.
 Nach Wechsel des tmux-Modus die Oberflaeche neu oeffnen.
 
 BEDIENUNG MIT MAUS UND TASTATUR
@@ -176,7 +176,7 @@ RAM-Host-/Gruppen-/Docker-Cache. Inventory-Dateien und Einstellungen im Ansible-
 Projekt sowie laufende tmux-Jobs bleiben erhalten. Auch ein vorher gestarteter
 Ladevorgang darf den bewusst geleerten Cache nicht spaeter wieder fuellen.
 Inventory laden ermittelt neu; Neu laden liest die Einstellungen erneut.
-Die UI-Werte liegen mit Rechten0600 im eigenen Zustandsordner als preferences.json
+Die UI-Werte liegen mit Rechten 0600 im eigenen Zustandsordner als preferences.json
 (Standard <state>/preferences.json). Sie bleiben ueber
 Updates und Dienstneustarts erhalten. Solange kein Wert gespeichert ist, gelten
 die Startvorgaben aus config.json; gespeicherte UI-Werte haben danach Vorrang.
@@ -225,9 +225,9 @@ Neue Sitzungen verwenden einen internen Platzhalter statt einer Benutzershell.
 Beim naechsten ansible-tui oder Jobstart wird eine fehlende Sitzung neu angelegt.
 Der Ansible-TUI-Dienst bleibt aktiv, damit Wiederaufruf und Hintergrundabfragen gehen.
 Unter Sitzungen: Oeffnen, Abbrechen (Ctrl+C), Ausgabeprotokoll und Log lesen.
-Opt-in Ausgabeprotokolle: nur Ausgabe, 5 x10 MiB Rotation pro Auftrag. Auch
+Opt-in Ausgabeprotokolle: nur Ausgabe, 5 x 10 MiB Rotation pro Auftrag. Auch
 Ausgabe kann vertraulich sein. Keine pauschale Terminal-Eingabeaufzeichnung.
-Ereignisse in SQLite maximal10000, Jobliste maximal500 Eintraege. Private
+Ereignisse in SQLite maximal 10000, Jobliste maximal 500 Eintraege. Private
 Jobdateien enthalten notwendige Argumente. Kein automatischer Job-Retry.
 Tmux schuetzt nicht vor Server-/tmux-Neustart oder einem Fehler im Job selbst.
 
@@ -264,7 +264,7 @@ Ausgabelog des ausgewaehlten abgeschlossenen Auftrags samt vier Rotationen.
 Ergebnis, Quittierung, Ereignisverlauf und tmux-Ausgabe bleiben erhalten.
 Laufende/unklare Auftraege sind geschuetzt. Nicht angelegte/schon geleerte Logs
 koennen ebenfalls geleert werden. Private Generation/Dateisperre verhindert
-Nachfuellen durch alte gepufferte 0.1.7-Ausgabelogprozesse.
+Nachfuellen durch alte gepufferte Ausgabelogprozesse aus Version 0.1.7.
 Sitzungen -> Terminal schliessen / Ctrl+W entfernt gezielt dessen beendete Pane.
 Es werden weder andere Terminals noch laufende Auftraege beendet. Auftragszeile
 und vorhandene Dateilogs bleiben. Geschlossene Terminalausgabe ist danach nicht
@@ -284,11 +284,11 @@ wenn diese Verwaltung aktiv ist, kein Dialog offen ist und gerade nicht getippt
 wird. Nach der Eingabe kehrt die Ansicht zur Verwaltung zurueck, solange du
 nicht selbst das Fenster gewechselt hast. Der Auftrag laeuft in tmux weiter.
 Die Sitzungsseite kennzeichnet anstehende Eingaben mit [?] Eingabe.
-Beide Funktionen sind unter99_Einstellungen getrennt abschaltbar. Die Enter-
+Beide Funktionen sind unter 99_Einstellungen getrennt abschaltbar. Die Enter-
 Option gilt fuer neue Jobs; Vordergrundautomatik kann sofort geaendert werden.
 
-Unterstuetzt: Ansible-TUI-Befehle docker-deploy und docker-deploy-all, Ansible-Core2.19
-oder2.20 und konfigurierte Standardstrategie linear. Andere Versionen/eigene
+Unterstuetzt: Ansible-TUI-Befehle docker-deploy und docker-deploy-all, Ansible-Core 2.19
+oder 2.20 und konfigurierte Standardstrategie linear. Andere Versionen/eigene
 Strategien behalten den bisherigen manuellen Terminalablauf. Explizite andere
 Strategien in einem Play koennen ebenfalls ausserhalb der Erkennung liegen.
 Die anfaenglichen Shellfragen von docker-deploy werden im Terminal gezeigt;
@@ -304,7 +304,7 @@ Markdown im angebundenen Ansible-Projekt unter descriptions/{commands,roles,
 playbooks,configurations}. Lesbare Anleitung und JSON-Block in derselben Datei.
 SQLite ist nur Cache; keine zweite gepflegte Beschreibungsliste im Add-on.
 Source-Hashes sperren veraltete Formulare, Control behaelt die fachlichen Pruefungen.
-Periodischer Refresh standardmaessig60 Sekunden. Import startet keine Skripte,
+Periodischer Refresh standardmaessig 60 Sekunden. Import startet keine Skripte,
 Lookups oder Playbooks. Nicht installierte Befehle werden nicht angeboten.
 
 DIENST UND ERWEITERTE AUFRUFE
@@ -321,4 +321,3 @@ Keine Pixelgrafiken oder vollstaendige Portainer-Paritaet. Composequelle wird
 mit nano und privatem Vorherbild bearbeitet. Ressourcensperren betreffen nur
 Add-on-Jobs, nicht externe Shellprozesse. Keine vollstaendige revisionssichere
 Personenzuordnung in einer gemeinsam verwendeten Root-Sitzung.
-Der Pruefbericht ist dem Deploymentpaket beigefuegt; die Weiterarbeit wird im Staging dokumentiert.

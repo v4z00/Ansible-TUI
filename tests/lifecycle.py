@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Native PTYs: Ctrl+Q returns to caller despite dead Shell; persistent ack/clear."""
+import errno
 import argparse,json,os,pty,select,shlex,signal,socket,sqlite3,subprocess,tempfile,time
 from pathlib import Path
 
@@ -141,6 +142,17 @@ def main():
    if daemon and daemon.poll() is None:daemon.terminate();daemon.wait(timeout=5)
    subprocess.run([tmux,'-S',str(sock),'kill-server'],capture_output=True)
    for pid,fd in children:
+    # Drain pending tmux output before closing the PTY. On macOS the child
+    # can otherwise block during terminal teardown while waitpid waits for it.
+    os.set_blocking(fd, False)
+    try:
+     while os.read(fd, 65536):
+      pass
+    except BlockingIOError:
+     pass
+    except OSError as error:
+     if error.errno != errno.EIO:
+      raise
     try:os.kill(pid,signal.SIGTERM)
     except ProcessLookupError:pass
     os.close(fd)

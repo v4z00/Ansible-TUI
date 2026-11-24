@@ -63,7 +63,7 @@ control.defaults {command}: {values,hint}, nur gepruefte --limit-Formulare,
   eindeutige vorhandene Gruppe. Coldcache darf dazu bewusst Inventory laden.
 settings.get: {values,preferences_file,project,inventory_loaded,host_count,...}.
 settings.update {values}: vollstaendige typisierte Preferencewerte; Validierung,
-  atomar0600 im eigenen State, sofort wirksam. Keine Zielhostaktionen.
+  atomar mit Modus 0600 im eigenen State, sofort wirksam. Keine Zielhostaktionen.
 inventory.clear {confirm:"clear-cache"}: {cleared:true}, nur RAM; Jobs/Dateien
   erhalten. Generationswechsel verwirft aeltere laufende/queued Ergebnisse.
 Aktive Praeferenzen ueberdauern Dienstneustarts, config.json bleibt erhalten.
@@ -89,10 +89,10 @@ events.clear {confirm:"clear-events"}: Ereignisse entfernen; ein neues
  events.cleared dokumentiert die Aktion. Jobs/Quittierungen/Dateilogs erhalten.
 Antwort dieser vier Methoden: {maintenance:true,message:...}.
 job.log.read liefert bei fehlendem/geleertem Log {output:""}.
-SQLite erhaelt additive Tabelle job_acknowledgements(job,at), user_version2;
+SQLite erhaelt additive Tabelle job_acknowledgements(job,at), user_version 2;
 keine bestehenden job-Spalten umbenannt/entfernt. Keine neue Pflegequelle.
 
-Tmux0.1.7: tmux.list -> {servers:[{label,available,sessions:[{id,name,windows,
+Tmux 0.1.7: tmux.list -> {servers:[{label,available,sessions:[{id,name,windows,
  clients,socket}]}],output}. Ansible-TUI- und Standard-Socket, unbekannte private Sockets
  nicht durchsucht. Rein lesend; fehlender Server liefert available:false.
 CLI ansible-tui tmux benoetigt keinen laufenden Ansible-TUI-Dienst.
