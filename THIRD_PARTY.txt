@@ -1,5 +1,5 @@
 ABHAENGIGKEITEN LAUT CARGO.LOCK / CARGO-METADATA
-Keine eigene oeffentliche Lizenz fuer das Add-on gewaehlt; kein Publishing.
+Die Ansible TUI steht unter der MIT-Lizenz (siehe LICENSE).
 ahash 0.8.12: MIT OR Apache-2.0
 allocator-api2 0.2.21: MIT OR Apache-2.0
 android_system_properties 0.1.6: MIT OR Apache-2.0

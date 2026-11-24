@@ -4,6 +4,7 @@ version = "0.2.3"
 edition = "2021"
 rust-version = "1.88"
 publish = false
+license = "MIT"
 description = "Terminaloberfläche für Ansible mit optionaler Docker- und tmux-Integration"
 repository = "https://github.com/v4z00/Ansible-TUI"
 

@@ -2,7 +2,9 @@ Hallöchen, mit Ansible TUI bediene ich Ansible direkt im Terminal. Ich kann Pla
 
 Auf einem Controller mit [Ansible-Allgm](https://github.com/v4z00/Ansible-Allgm) zeigt die TUI auch die dort registrierten Befehle und ihre Beschreibungen. Du kannst sie ebenso mit einem eigenständigen Ansible-Projekt verwenden.
 
-Die TUI entsteht mit KI-Unterstützung und ist noch in Entwicklung. Wenn dir beim Ausprobieren etwas auffällt, schreib mir gern ein Issue. Die Lizenzfrage ist noch offen.
+Die TUI entsteht mit KI-Unterstützung und ist noch in Entwicklung. Wenn dir beim Ausprobieren etwas auffällt, schreib mir gern ein Issue.
+
+Der Projektcode steht unter der [MIT-Lizenz](LICENSE). Für mitgelieferte Drittkomponenten gelten deren jeweilige Lizenzen.
 
 Ich entwickle und teste auf `staging`. Freigegebene Änderungen kommen nach `main`.
 
