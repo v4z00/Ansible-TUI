@@ -255,6 +255,11 @@ impl State {
                             .await?;
                         self.locks.lock().unwrap().remove(&id);
                     }
+                    Ok((false, _)) if j["state"] != "running" => {
+                        let copy = id.clone();
+                        self.database(move |db| db.set_job(&copy, "running", None, None))
+                            .await?;
+                    }
                     Err(_) => {
                         let copy = id.clone();
                         self.database(move |db| db.set_job(&copy, "unknown", None, None))
@@ -264,10 +269,17 @@ impl State {
                 }
             } else {
                 let mut c = runtime::tmux(&self.cfg);
-                c.args(["list-panes", "-a", "-F", "#{pane_id}\t#{window_name}"]);
+                c.args([
+                    "list-panes",
+                    "-s",
+                    "-t",
+                    "=ansible-tui",
+                    "-F",
+                    "#{pane_id}|#{window_name}",
+                ]);
                 let found = runtime::output(c, 3).await.ok().and_then(|text| {
                     text.lines().find_map(|line| {
-                        line.split_once('\t')
+                        line.split_once('|')
                             .filter(|(_, name)| name.ends_with(&format!("[{id}]")))
                             .map(|(pane, _)| pane.to_string())
                     })

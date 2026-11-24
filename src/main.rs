@@ -8,6 +8,7 @@ mod ui;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use serde_json::Value;
+use std::io::IsTerminal;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -112,7 +113,13 @@ async fn run() -> Result<()> {
         }
         Action::Open if !tmux_enabled()? => ui::run(cfg, path.canonicalize()?).await?,
         Action::Open => {
+            let in_tmux = runtime::in_own_tmux(&cfg);
+            anyhow::ensure!(
+                in_tmux || std::io::stdin().is_terminal(),
+                "Zum Oeffnen der Verwaltung ein interaktives Terminal verwenden"
+            );
             runtime::session(&cfg).await?;
+            runtime::show_tmux_return_hint(&cfg).await?;
             let args = vec![
                 std::env::current_exe()?.display().to_string(),
                 "--config".into(),
@@ -127,7 +134,7 @@ async fn run() -> Result<()> {
             select.args(["select-window", "-t", &pane]);
             runtime::output(select, 5).await?;
             let mut cmd = runtime::tmux(&cfg);
-            if runtime::in_own_tmux(&cfg) {
+            if in_tmux {
                 cmd.args(["switch-client", "-t", "ansible-tui"]);
             } else {
                 cmd.env_remove("TMUX");

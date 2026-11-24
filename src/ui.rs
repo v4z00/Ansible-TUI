@@ -498,70 +498,72 @@ fn docker_tabs(f: &mut Frame, area: Rect, m: &Model, screen: &mut Screen) {
         );
         return;
     }
-    let selected = hosts
-        .iter()
-        .position(|h| h["host"] == m.docker_host)
-        .unwrap_or(0);
-    let mut items = vec![("<".into(), Action::DockerCycle(false))];
-    let mut used = 6u16;
-    for host in hosts.iter().skip(selected) {
-        let state = match host["state"].as_str() {
-            Some("ready") => host["containers"]
-                .as_u64()
-                .map(|n| n.to_string())
-                .unwrap_or_else(|| {
+    let selected = hosts.iter().position(|h| h["host"] == m.docker_host);
+    // Keep one fixed set of tabs per page. Status changes and selection within
+    // the page preserve the click targets; only selection beyond it scrolls.
+    let room = usize::from(area.width.saturating_sub(21)); // <, > and Alle, including gaps
+    let max_title = room.saturating_sub(5);
+    let mut tabs = Vec::new();
+    let mut used = 0;
+    let mut start = 0;
+    for (i, host) in hosts.iter().enumerate() {
+        let name = label(host, "host");
+        let (state, tone) = match host["state"].as_str() {
+            Some("ready") => {
+                let n = host["containers"].as_u64().unwrap_or_else(|| {
                     host["rows"]
                         .as_array()
-                        .map(|r| r.len().to_string())
+                        .map(|r| r.len() as u64)
                         .unwrap_or_default()
-                }),
-            Some("error") => "!".into(),
-            _ => "...".into(),
+                });
+                (
+                    if n > 999 {
+                        "999+".into()
+                    } else {
+                        n.to_string()
+                    },
+                    GOOD,
+                )
+            }
+            Some("error") => ("!".into(), BAD),
+            _ => ("...".into(), WARN),
         };
-        let mut title = format!("{} [{}]", label(host, "host"), state);
-        if items.len() == 1 && title.chars().count() as u16 + 31 > area.width {
-            title = format!(
-                "{}...",
-                title
-                    .chars()
-                    .take(area.width.saturating_sub(34) as usize)
-                    .collect::<String>()
-            );
+        let name_room = if max_title > 10 {
+            max_title - 7
+        } else {
+            max_title
+        };
+        let mut title = clean(&name);
+        if title.chars().count() > name_room && name_room > 0 {
+            title = title.chars().take(name_room - 1).chain(['…']).collect();
         }
-        let width = title.chars().count() as u16 + 5;
-        if used + width + 20 > area.width {
-            break;
+        if max_title > 10 {
+            title.push_str(&format!(" [{state:>4}]"));
         }
-        used += width;
-        items.push((title, Action::DockerTab(label(host, "host"))));
+        let width = title.chars().count() + 5;
+        if used + width > room {
+            if i > selected.unwrap_or_default() {
+                break;
+            }
+            tabs.clear();
+            start = i;
+            used = 0;
+        }
+        if width <= room {
+            used += width;
+            tabs.push((title, name, tone));
+        }
     }
+    let mut items = vec![("<".into(), Action::DockerCycle(false))];
+    let mut tones = vec![None];
+    for (title, name, tone) in tabs {
+        items.push((title, Action::DockerTab(name)));
+        tones.push(Some(tone));
+    }
+    let focused = selected.filter(|_| items.len() > 1).map(|i| i - start + 1);
     items.push((">".into(), Action::DockerCycle(true)));
     items.push(("Alle".into(), Action::DockerPicker));
-    let tones: Vec<_> = items
-        .iter()
-        .map(|(_, action)| {
-            if let Action::DockerTab(name) = action {
-                hosts
-                    .iter()
-                    .find(|h| h["host"] == *name)
-                    .map(|h| match h["state"].as_str() {
-                        Some("ready") => GOOD,
-                        Some("error") => BAD,
-                        _ => WARN,
-                    })
-            } else {
-                None
-            }
-        })
-        .collect();
-    buttons_toned(
-        f,
-        area,
-        items,
-        (!m.docker_host.is_empty()).then_some(1),
-        screen,
-        &tones,
-    );
+    buttons_toned(f, area, items, focused, screen, &tones);
     screen.actions.clear();
 }
 fn load_docker(m: &mut Model, tx: &tokio::sync::mpsc::Sender<Reply>, cfg: &Config) {
@@ -4856,6 +4858,21 @@ mod tests {
             ..Default::default()
         };
         let (_, screen) = render(&mut m, 110, 36);
+        let tab_positions = |screen: &Screen| {
+            screen
+                .hits
+                .iter()
+                .filter_map(|hit| {
+                    if let Action::DockerTab(host) = &hit.action {
+                        Some((host.clone(), hit.rect))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+        };
+        let positions = tab_positions(&screen);
+        assert_eq!(positions.len(), 3);
         let tab = screen
             .hits
             .iter()
@@ -4872,6 +4889,15 @@ mod tests {
         let value = docker_hosts(&m)[1].clone();
         apply_docker_snapshot(&mut m, &value);
         assert!(m.docker.is_empty());
+        m.docker_host = "beta".into();
+        m.docker_info["hosts"][1]["state"] = json!("ready");
+        m.docker_info["hosts"][1]["containers"] = json!(1000);
+        let (_, screen) = render(&mut m, 110, 36);
+        assert_eq!(tab_positions(&screen), positions);
+        let (_, screen) = render(&mut m, 66, 20);
+        assert!(tab_positions(&screen)
+            .iter()
+            .any(|(host, _)| host == "beta"));
         let (_, screen) = render(&mut m, 60, 20);
         assert!(screen.hits.iter().any(|h| h.action == Action::DockerPicker));
     }

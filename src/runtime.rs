@@ -66,10 +66,16 @@ pub async fn leave_ui(cfg: &Config) -> Result<()> {
     }
     let pane = std::env::var("TMUX_PANE").context("TUI-Pane fehlt")?;
     let mut list = tmux(cfg);
-    list.args(["list-clients", "-F", "#{client_name}\t#{pane_id}"]);
+    list.args([
+        "list-clients",
+        "-t",
+        "=ansible-tui",
+        "-F",
+        "#{pane_id}|#{client_name}",
+    ]);
     let clients = output(list, 5).await?;
     for line in clients.lines() {
-        if let Some((client, active)) = line.split_once('\t') {
+        if let Some((active, client)) = line.split_once('|') {
             if active == pane {
                 let mut cmd = tmux(cfg);
                 cmd.args(["detach-client", "-t", client]);
@@ -86,18 +92,22 @@ pub async fn job_terminal(cfg: &Config, pane: &str, id: &str) -> Result<(bool, O
         "-p",
         "-t",
         pane,
-        "#{session_name}\t#{pane_dead}\t#{pane_dead_status}\t#{window_name}",
+        "#{session_name}|#{pane_dead}|#{pane_dead_status}|#{window_name}",
     ]);
     let result = output(command, 5)
         .await
         .context("Auftragsterminal ist nicht mehr erreichbar")?;
-    let mut fields = result.trim_end_matches(['\r', '\n']).splitn(4, '\t');
+    // tmux 3.5a maps literal tabs in formats to underscores. Use printable
+    // separators with free-form names last so a name may contain the separator.
+    let mut fields = result.trim_end_matches(['\r', '\n']).splitn(4, '|');
     let session = fields.next();
     let dead = fields.next().context("Terminalstatus fehlt")?;
     let code = fields.next().and_then(|status| status.parse().ok());
     let window = fields.next().context("Terminalname fehlt")?;
     anyhow::ensure!(
-        session == Some("ansible-tui") && window.ends_with(&format!("[{id}]")),
+        session == Some("ansible-tui")
+            && matches!(dead, "0" | "1")
+            && window.ends_with(&format!("[{id}]")),
         "Terminal gehoert nicht zum ausgewaehlten Auftrag"
     );
     Ok((dead == "1", code))
@@ -221,7 +231,20 @@ pub async fn new_window(cfg: &Config, name: &str, argv: &[String], cwd: &Path) -
     output(start, 5).await?;
     Ok(pane)
 }
-/// Stop only the MJH session when no UI, job, client or foreign live pane needs it.
+pub async fn show_tmux_return_hint(cfg: &Config) -> Result<()> {
+    let mut c = tmux(cfg);
+    c.args([
+        "set-option",
+        "-t",
+        "=ansible-tui",
+        "status-right",
+        "#{?#{==:#{window_name},Verwaltung},,Zur Verwaltung: Ctrl+B dann w}",
+    ]);
+    output(c, 5).await?;
+    Ok(())
+}
+
+/// Stop only the Ansible TUI session when no UI, job, client or foreign live pane needs it.
 /// The next open/job recreates it. Never kill the tmux server or another session.
 pub async fn cleanup_session(cfg: &Config, jobs: &[Value]) -> Result<()> {
     if jobs.iter().any(|j| {
@@ -233,7 +256,7 @@ pub async fn cleanup_session(cfg: &Config, jobs: &[Value]) -> Result<()> {
         return Ok(());
     }
     let mut clients = tmux(cfg);
-    clients.args(["list-clients", "-t", "ansible-tui", "-F", "#{client_name}"]);
+    clients.args(["list-clients", "-t", "=ansible-tui", "-F", "#{client_name}"]);
     let Ok(client_names) = output(clients, 3).await else {
         return Ok(());
     };
@@ -241,50 +264,63 @@ pub async fn cleanup_session(cfg: &Config, jobs: &[Value]) -> Result<()> {
         return Ok(());
     }
     let mut panes = tmux(cfg);
-    panes.args(["list-panes","-s","-t","ansible-tui","-F","#{pane_id}\t#{pane_dead}\t#{@mjh_owned}\t#{@mjh_anchor}\t#{window_name}\t#{session_created}\t#{window_id}"]);
+    panes.args([
+        "list-panes",
+        "-s",
+        "-t",
+        "=ansible-tui",
+        "-F",
+        "#{session_created}|#{pane_id}|#{pane_dead}|#{@mjh_owned}|#{@mjh_anchor}|#{window_name}",
+    ]);
     let Ok(text) = output(panes, 3).await else {
         return Ok(());
     };
     if text.trim().is_empty() {
         return Ok(());
     }
-    let mut windows = std::collections::HashSet::new();
+    let mut snapshot = String::new();
     let mut created = String::new();
     for line in text.lines() {
-        let f: Vec<_> = line.split('\t').collect();
-        if f.len() != 7 {
+        let fields: Vec<_> = line.splitn(6, '|').collect();
+        let [born, pane, dead, owned, anchor, name] = fields.as_slice() else {
             return Ok(());
-        }
-        if f[5]
+        };
+        if born
             .parse::<i64>()
             .ok()
             .is_none_or(|t| chrono::Utc::now().timestamp() - t < 5)
+            || !pane
+                .strip_prefix('%')
+                .is_some_and(|id| !id.is_empty() && id.bytes().all(|c| c.is_ascii_digit()))
+            || !matches!(*dead, "0" | "1")
         {
             return Ok(());
         }
-        windows.insert(f[6]);
-        created = f[5].to_string();
-        if f[3] == "1" {
+        snapshot.push_str(&format!("{pane}={dead}|"));
+        created = born.to_string();
+        if *anchor == "1" {
             continue;
         }
         let known = jobs.iter().any(|j| {
-            j["pane"] == f[0] && f[4].ends_with(&format!("[{}]", j["id"].as_str().unwrap_or("")))
+            j["pane"] == *pane && name.ends_with(&format!("[{}]", j["id"].as_str().unwrap_or("")))
         });
-        if f[1] != "1" || !(f[2] == "1" || known || f[4] == "Shell") {
+        if *dead != "1" || !(*owned == "1" || known || *name == "Shell") {
             return Ok(());
         }
     }
     let mut close = tmux(cfg);
-    // Recheck client/window count inside tmux before deletion, so an arriving
-    // client or new UI window invalidates this cleanup snapshot.
-    let condition=format!("#{{&&:#{{==:#{{session_attached}},0}},#{{&&:#{{==:#{{session_windows}},{}}},#{{==:#{{session_created}},{created}}}}}}}",windows.len());
+    // Check the pane identities and states inside the tmux server. A new UI,
+    // split, or revived pane invalidates the snapshot even at the same count.
+    let condition = format!(
+        "#{{&&:#{{==:#{{session_attached}},0}},#{{&&:#{{==:#{{W:#{{P:#{{pane_id}}=#{{pane_dead}}|}}}},{snapshot}}},#{{==:#{{session_created}},{created}}}}}}}"
+    );
     close.args([
         "if-shell",
         "-F",
         "-t",
-        "ansible-tui",
+        "=ansible-tui",
         &condition,
-        "kill-session -t ansible-tui",
+        "kill-session -t =ansible-tui",
     ]);
     output(close, 5).await?;
     Ok(())
@@ -300,19 +336,38 @@ pub async fn tmux_sessions(cfg: &Config) -> Result<Value> {
         } else {
             tmux(cfg)
         };
-        c.args(["list-sessions","-F","#{session_id}\t#{session_name}\t#{session_windows}\t#{session_attached}\t#{socket_path}"]);
+        c.args([
+            "display-message",
+            "-p",
+            "#{socket_path}",
+            ";",
+            "list-sessions",
+            "-F",
+            "#{session_id}|#{session_windows}|#{session_attached}|#{session_name}",
+        ]);
         match output(c, 3).await {
             Ok(text) => {
                 let mut rows = Vec::new();
-                for line in text.lines() {
-                    let f: Vec<_> = line.split('\t').collect();
-                    if f.len() != 5 {
+                let mut output = text.lines();
+                let socket = output.next().unwrap_or_default();
+                for line in output {
+                    let fields: Vec<_> = line.splitn(4, '|').collect();
+                    let [id, windows, clients, name] = fields.as_slice() else {
                         continue;
-                    }
-                    rows.push(json!({"id":f[0],"name":f[1],"windows":f[2].parse::<u64>().unwrap_or(0),"clients":f[3].parse::<u64>().unwrap_or(0),"socket":f[4]}));
+                    };
+                    let (Ok(windows), Ok(clients)) =
+                        (windows.parse::<u64>(), clients.parse::<u64>())
+                    else {
+                        continue;
+                    };
+                    rows.push(json!({"id":id,"name":name,"windows":windows,"clients":clients,"socket":socket}));
                     lines.push(format!(
-                        "{label}: {} · {} Fenster · {} Clients",
-                        f[1], f[2], f[3]
+                        "{label}: {name} · {windows} Fenster · {clients} Clients"
+                    ));
+                }
+                if rows.is_empty() {
+                    lines.push(format!(
+                        "{label}: Sitzungsliste konnte nicht gelesen werden."
                     ));
                 }
                 servers.push(json!({"label":label,"available":true,"sessions":rows}));
@@ -531,37 +586,17 @@ pub struct JobSpec {
     pub direct: bool,
 }
 fn navigation_hint(windows: &str) -> String {
-    let direct = windows
-        .lines()
-        .filter_map(|line| {
-            let mut fields = line.split('\t');
-            let index = fields.next()?;
-            let name = fields.next()?;
-            let dead = fields.next()?;
-            if name == "Verwaltung"
-                && dead == "0"
-                && index.len() == 1
-                && index.chars().all(|c| c.is_ascii_digit())
-            {
-                Some(index)
-            } else {
-                None
-            }
-        })
-        .next();
-    let mut lines = vec![
-        "".into(),
-        "=== TMUX-NAVIGATION: ZURUECK ZUR OBERFLAECHE ===".into(),
-    ];
-    if let Some(index) = direct {
-        lines.push(format!(
-            "Zur Verwaltung: Ctrl+B druecken, loslassen, dann {index}.  (Ctrl+B -> {index})"
-        ));
+    let mut live = windows.lines().filter_map(|line| {
+        let (index, info) = line.split_once('|')?;
+        (info == "0|Verwaltung").then_some(index)
+    });
+    let mut hint = "\nZurueck zur Verwaltung: Unten auf Verwaltung klicken oder Ctrl+B loslassen, dann w.\nIn der Fensterauswahl Verwaltung waehlen.".to_owned();
+    if let (Some(index), None) = (live.next(), live.next()) {
+        if index.len() == 1 && index.bytes().all(|digit| digit.is_ascii_digit()) {
+            hint.push_str(&format!("\nDirekt: Ctrl+B loslassen, dann {index}."));
+        }
     }
-    lines.push("Fensterauswahl: Ctrl+B -> w; danach Verwaltung waehlen.".into());
-    lines.push("Verbindung trennen: Ctrl+B, loslassen, dann d. Auftraege laufen weiter.".into());
-    lines.push("Eine Ziffer allein wechselt hier NICHT das Fenster.\nCtrl+B immer loslassen, BEVOR du die zweite Taste drueckst.".into());
-    lines.join("\n")
+    hint
 }
 fn write_interaction(path: &Path, state: &str, token: &str) -> Result<()> {
     use std::{io::Write, os::unix::fs::OpenOptionsExt};
@@ -746,7 +781,7 @@ pub async fn run_job(path: &Path, cfg: &Config) -> Result<i32> {
     let interaction = path.with_extension("interaction.json");
     let adapted = enable_docker_adapter(&mut c, cfg, &spec, &interaction).await;
     if !spec.direct {
-        println!("Auftrag in tmux. Navigation: Ctrl+B loslassen, dann w (Fensterauswahl).\n");
+        println!("Zur Verwaltung: unten anklicken oder Ctrl+B loslassen, dann w.\n");
     }
     let code = match c.status().await {
         Ok(status) => {
@@ -778,7 +813,7 @@ pub async fn run_job(path: &Path, cfg: &Config) -> Result<i32> {
         "-t",
         "ansible-tui",
         "-F",
-        "#{window_index}\t#{window_name}\t#{pane_dead}",
+        "#{window_index}|#{pane_dead}|#{window_name}",
     ]);
     let names = output(windows, 5).await.unwrap_or_default();
     println!("{}", navigation_hint(&names));
@@ -884,14 +919,19 @@ mod tests {
     use super::*;
     #[test]
     fn tmux_return_hint_uses_live_ui_index_and_has_safe_fallback() {
-        let hint = navigation_hint("0\tShell\t0\n3\tVerwaltung\t0\n");
-        assert!(hint.contains("Ctrl+B -> 3"));
-        assert!(hint.contains("Ctrl+B -> w"));
-        assert!(hint.contains("Ziffer allein"));
-        for names in ["1\tVerwaltung\t1", "11\tVerwaltung\t0", ""] {
+        let hint = navigation_hint("0|0|Shell\n3|0|Verwaltung\n");
+        assert!(hint.contains("dann 3"));
+        assert!(hint.contains("dann w"));
+        assert!(hint.contains("Verwaltung klicken"));
+        for names in [
+            "1|1|Verwaltung",
+            "11|0|Verwaltung",
+            "1|0|Verwaltung\n2|0|Verwaltung",
+            "",
+        ] {
             let hint = navigation_hint(names);
-            assert!(hint.contains("Ctrl+B -> w"));
-            assert!(!hint.contains("Ctrl+B -> 1)"));
+            assert!(hint.contains("dann w"));
+            assert!(!hint.contains("Direkt:"));
         }
     }
     #[test]

@@ -1,4 +1,4 @@
-ANSIBLE TUI 0.2.2 - BETRIEBSANLEITUNG
+ANSIBLE TUI 0.2.3 - BETRIEBSANLEITUNG
 WORK IN PROGRESS. NOCH NICHT LIVE GESCHALTET.
 
 Linux-Installation, Voraussetzungen und Updates: descriptions/installation.md.
@@ -210,10 +210,12 @@ Ctrl+Q beendet keine laufenden Jobs und keinen tmux-Server. Andere Clients, die 
 andere Fenster/Sitzungen ansehen, bleiben angehaengt. Gemeinsam angehaengte
 Teilnehmer derselben Verwaltung werden beim Schliessen dieser UI getrennt.
 Direktaufruf ansible-tui ui ohne tmux beendet nur die TUI im aktuellen Terminal.
-Ctrl+B DRUECKEN, LOSLASSEN, danach w zeigt die Fensterauswahl.
-Dort Verwaltung waehlen. Wenn Verwaltung Fenster1 ist: Ctrl+B, loslassen, dann1.
+Im Auftrag zeigt die tmux-Statusleiste den Rueckweg. Klicke dort auf
+Verwaltung oder druecke Ctrl+B, lass die Tasten los und druecke dann w.
+In der Fensterauswahl Verwaltung waehlen.
 Eine Ziffer allein wechselt kein tmux-Fenster! Ctrl+B, loslassen, dann d trennt
-den Client. Am Auftragsende steht die tatsaechliche Verwaltungsnummer im Terminal.
+ den Client. Ist genau eine Verwaltung mit einstelliger Nummer offen, zeigt
+ das Auftragsterminal am Ende auch den direkten Tastaturweg.
 Ein beendetes Auftragsfenster behaelt seine Ausgabe bei geoeffneter Verwaltung.
 Sind keine Verwaltung, keine aktiven/unklaren Auftraege und keine angehaengten
 Clients mehr vorhanden, beendet der Dienst die Ansible-TUI-Sitzung automatisch. Verwaiste
