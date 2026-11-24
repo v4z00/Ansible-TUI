@@ -236,7 +236,7 @@ pub async fn show_tmux_return_hint(cfg: &Config) -> Result<()> {
     c.args([
         "set-option",
         "-t",
-        "=ansible-tui",
+        "ansible-tui",
         "status-right",
         "#{?#{==:#{window_name},Verwaltung},,Zur Verwaltung: Ctrl+B dann w}",
     ]);
@@ -312,15 +312,15 @@ pub async fn cleanup_session(cfg: &Config, jobs: &[Value]) -> Result<()> {
     // Check the pane identities and states inside the tmux server. A new UI,
     // split, or revived pane invalidates the snapshot even at the same count.
     let condition = format!(
-        "#{{&&:#{{==:#{{session_attached}},0}},#{{&&:#{{==:#{{W:#{{P:#{{pane_id}}=#{{pane_dead}}|}}}},{snapshot}}},#{{==:#{{session_created}},{created}}}}}}}"
+        "#{{&&:#{{==:#{{session_name}}:#{{session_attached}},ansible-tui:0}},#{{&&:#{{==:#{{W:#{{P:#{{pane_id}}=#{{pane_dead}}|}}}},{snapshot}}},#{{==:#{{session_created}},{created}}}}}}}"
     );
     close.args([
         "if-shell",
         "-F",
         "-t",
-        "=ansible-tui",
+        "ansible-tui",
         &condition,
-        "kill-session -t =ansible-tui",
+        "kill-session -t ansible-tui",
     ]);
     output(close, 5).await?;
     Ok(())
