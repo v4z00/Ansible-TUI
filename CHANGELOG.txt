@@ -1,4 +1,4 @@
-s0.2.3 - 24.11.2026
+0.2.3 - 24.11.2026
 - tmux 3.5a: laufende Auftraege, Sitzungsuebersicht und automatische
   Bereinigung werden wieder korrekt ausgewertet.
 - Docker-Hostreiter behalten beim Auswaehlen und Laden ihre Position.

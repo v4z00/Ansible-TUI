@@ -30,7 +30,7 @@ deines vorhandenen Ansible-Projekts ein.
 
 ```bash
 ansible_project='/pfad/zum/ansible-projekt'
-git clone --branch v0.2.2 https://github.com/v4z00/Ansible-TUI.git &&
+git clone --branch v0.2.3 https://github.com/v4z00/Ansible-TUI.git &&
   cd Ansible-TUI &&
   bash install.sh --project "$ansible_project" &&
   export PATH="$HOME/.local/bin:$PATH" &&
