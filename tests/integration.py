@@ -206,7 +206,7 @@ else: print('MOCK_REMOTE_ACTION')
             wait_for(lambda:any(j['code']==0 for j in api('jobs.list')))
             base_job=next(j for j in api('jobs.list') if j['label']=='Ansible base')
             ui_index=tmux('display-message','-p','-t',ui,'#{window_index}').strip()
-            hint=wait_for(lambda: (pane if 'In der Fensterauswahl Verwaltung waehlen.' in (pane:=tmux('capture-pane','-p','-t',base_job['pane'])) else None))
+            hint=wait_for(lambda: (pane if 'In der Fensterauswahl Verwaltung waehlen.' in (pane:=tmux('capture-pane','-p','-J','-t',base_job['pane'])) else None))
             if len(ui_index)==1:assert 'Direkt: Ctrl+B loslassen, dann '+ui_index+'.' in hint
             assert 'Ctrl+B loslassen, dann w' in hint
             # Reproduce the reported dead-pane situation with a real attached client.
