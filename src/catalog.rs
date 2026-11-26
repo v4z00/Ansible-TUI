@@ -36,6 +36,61 @@ pub struct Entry {
     pub feature: Option<String>,
     #[serde(default)]
     pub source_hashes: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub i18n: BTreeMap<String, DisplayText>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub stale_sources: bool,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct DisplayText {
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub fields: BTreeMap<String, FieldText>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct FieldText {
+    #[serde(default)]
+    pub label: String,
+    #[serde(default)]
+    pub description: String,
+}
+
+impl Entry {
+    // Resolve text on a freshly loaded copy. Bindings, IDs and validity remain canonical.
+    pub fn localize(&mut self, language: &str) {
+        if let Some(text) = self.i18n.get(language) {
+            if !text.title.trim().is_empty() {
+                self.title.clone_from(&text.title);
+            }
+            if !text.description.trim().is_empty() {
+                self.body.clone_from(&text.description);
+            }
+            for field in &mut self.fields {
+                if let Some(display) = field["id"].as_str().and_then(|id| text.fields.get(id)) {
+                    if !display.label.trim().is_empty() {
+                        field["label"] = Value::String(display.label.clone());
+                    }
+                    if !display.description.trim().is_empty() {
+                        field["description"] = Value::String(display.description.clone());
+                    }
+                }
+            }
+        }
+        if self.stale_sources {
+            let warning = if language == "en" {
+                "Source changed or missing. The form is disabled. Use the terminal workflow."
+            } else {
+                "Quelle geändert oder fehlt. Das Formular ist deaktiviert. Nutze den Terminalablauf."
+            };
+            self.body = format!("{warning}\n\n{}", self.body);
+        }
+        self.i18n.clear();
+    }
 }
 fn files(path: &Path, out: &mut Vec<PathBuf>, depth: usize) -> Result<()> {
     if !path.exists() {
@@ -68,7 +123,7 @@ pub fn parse_document(text: &str) -> Result<Entry> {
         .split_once("```json\n")
         .context("Strukturierter JSON-Block fehlt")?;
     let (json, tail) = block
-        .split_once("```")
+        .split_once("\n```")
         .context("JSON-Block nicht geschlossen")?;
     let mut entry: Entry = serde_json::from_str(json)?;
     if entry.schema_version != 1
@@ -192,7 +247,7 @@ pub fn scan(root: &Path) -> Result<(Vec<Entry>, Vec<String>)> {
                         .is_some_and(|b| format!("{:x}", Sha256::digest(b)) == *hash);
                     if !valid {
                         e.documented = false;
-                        e.body=format!("QUELLE VERAENDERT/FEHLT: Formular deaktiviert; Terminalablauf bleibt verfuegbar.\n{}",e.body);
+                        e.stale_sources = true;
                         break;
                     }
                 }
@@ -238,7 +293,17 @@ pub fn scan(root: &Path) -> Result<(Vec<Entry>, Vec<String>)> {
             registered.insert(name.to_string());
             let key = format!("command:{name}");
             let e=entries.entry(key).or_insert_with(|| Entry {schema_version:1,kind:"command".into(),reference:name.into(),body:"Keine erweiterte Beschreibung vorhanden. Vorhandenen interaktiven Ablauf verwenden.".into(),..Default::default()});
-            e.title = c["description"].as_str().unwrap_or(name).into();
+            if e.title.is_empty() {
+                e.title = c["description"].as_str().unwrap_or(name).into();
+            }
+            for language in ["de", "en"] {
+                if let Some(description) = c["i18n"][language]["description"].as_str() {
+                    let display = e.i18n.entry(language.to_string()).or_default();
+                    if display.title.is_empty() {
+                        display.title = description.to_string();
+                    }
+                }
+            }
             e.feature = c["feature"].as_str().map(String::from);
             e.target_hint = if e.documented
                 && e.fields.iter().any(|f| {

@@ -6,6 +6,7 @@ CLI: ansible-tui api 'ANFRAGE'
 LESEN
 {"method":"status"}
 {"method":"catalog.list"}
+{"method":"catalog.list","lang":"en"}
 {"method":"catalog.refresh"}
 {"method":"completion.query","source":"inventory.targets","prefix":"demo"}
 {"method":"inventory.refresh"}  BEWUSSTE Inventory-Ausfuehrung, ggf. API/Plugins!
@@ -110,3 +111,15 @@ Terminal ueber run-job einmal aus. Ein nicht uebernommener Start laeuft ab.
 playbook.start {playbook, limit?, check?, terminal?} fuer Standardprojekte.
 Der Pfad muss im Katalog liegen. check:true setzt --check, limit setzt --limit.
 Inventory stammt aus dem Projekt oder der expliziten inventory-Konfiguration.
+
+
+Katalogsprache / Catalog language
+
+The catalog accepts de or en. For example: ansible-tui --lang en ui.
+Command help, description text and field labels follow --lang, CONTROLLER_LANG,
+then the configured controller language. Legacy projects default to German.
+catalog.list accepts a per-request lang. Concurrent clients can select
+different languages. SQLite caches one canonical record with both translations.
+A language change requires no catalog refresh. A missing translation uses the
+existing schema_version 1 title, field help or Markdown body. Source hashes,
+bindings, command names, constraints and submitted values do not change.

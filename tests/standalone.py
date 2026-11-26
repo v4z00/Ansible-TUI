@@ -45,6 +45,12 @@ def main():
             "    - ansible.builtin.debug:\n"
             '        msg: "STANDALONE_CHECK={{ ansible_check_mode }}"\n'
         )
+        descriptions = project / "descriptions" / "playbooks"
+        descriptions.mkdir(parents=True)
+        contract = {"schema_version": 1, "kind": "playbook", "ref": "hello.yml", "title": "Legacy",
+                    "i18n": {"en": {"title": "English fixture", "description": "English playbook help"},
+                             "de": {"title": "Deutsche Probe", "description": "Deutsche Playbookhilfe"}}}
+        (descriptions / "hello.md").write_text("Existing help\n\n```json\n" + json.dumps(contract) + "\n```\n")
         external = root / "outside.yml"
         external.write_text("[]\n")
         (project / "outside.yml").symlink_to(external)
@@ -79,6 +85,14 @@ def main():
             wait_for(lambda: (state / "api.sock").exists())
             entries = wait_for(lambda: api("catalog.list").get("data"))
             assert [entry["ref"] for entry in entries] == ["hello.yml"]
+            request = json.dumps({"method": "catalog.list"})
+            for lang, title in [("de", "Deutsche Probe"), ("en", "English fixture"), ("de", "Deutsche Probe")]:
+                proc = subprocess.run([*cmd, "--lang", lang, "api", request], env=env,
+                                      capture_output=True, text=True, check=True)
+                assert json.loads(proc.stdout)[0]["title"] == title
+            assert not api("catalog.list", lang="xx")["ok"]
+            assert api("catalog.list", lang="en")["data"][0]["body"] == "English playbook help"
+
             assert not api("playbook.start", playbook="outside.yml", terminal=True)["ok"]
             assert not api("playbook.start", playbook="hello.yml")["ok"]
             assert not api("docker.discover")["ok"]
@@ -91,7 +105,7 @@ def main():
 
             ui, tty = pty.fork()
             if ui == 0:
-                os.execve(cmd[0], [*cmd, "open"], env)
+                os.execve(cmd[0], [*cmd, "--lang", "en", "open"], env)
             fcntl.ioctl(tty, termios.TIOCSWINSZ, struct.pack("HHHH", 36, 120, 0, 0))
 
             def see(marker):
@@ -109,7 +123,9 @@ def main():
 
             see(b"ANSIBLE TUI")
             time.sleep(0.4)
-            os.write(tty, b"2\r")
+            os.write(tty, b"2")
+            see(b"English fixture")
+            os.write(tty, b"\r")
             see(b"Check-Modus")
             os.write(tty, b"\x10")  # Ctrl+P: preview
             see(b"Vordergrund starten")

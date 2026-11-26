@@ -11,6 +11,8 @@ use std::{io::Write, os::unix::fs::OpenOptionsExt};
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
     pub project: PathBuf,
+    #[serde(skip)]
+    pub language: String,
     pub state: PathBuf,
     pub tmux_socket: PathBuf,
     pub refresh_seconds: u64,
@@ -31,6 +33,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             project: ".".into(),
+            language: "de".into(),
             state: Self::data_dir(),
             tmux_socket: Self::data_dir().join("tmux.sock"),
             refresh_seconds: 60,
@@ -49,6 +52,40 @@ impl Default for Config {
     }
 }
 impl Config {
+    pub fn catalog_language(&self, requested: Option<&str>) -> Result<String> {
+        let supported = |value: &str| matches!(value, "de" | "en");
+        if let Some(value) = requested {
+            anyhow::ensure!(supported(value), "Unsupported catalog language (de/en)");
+            return Ok(value.to_string());
+        }
+        let helper = self.project.join("scripts/controller_i18n.py");
+        if self.project.join("controller-base.json").is_file()
+            && self.project.join("bin/control").is_file()
+            && helper.is_file()
+        {
+            let project = self.project.canonicalize()?;
+            let helper = helper.canonicalize()?;
+            anyhow::ensure!(
+                helper.starts_with(&project),
+                "Language helper outside project"
+            );
+            let result = std::process::Command::new("python3")
+                .args(["-I", "-B"])
+                .arg(helper)
+                .args(["language", "--root"])
+                .arg(&project)
+                .output()
+                .context("Read controller language")?;
+            let value = std::str::from_utf8(&result.stdout)?.trim();
+            anyhow::ensure!(
+                result.status.success() && supported(value),
+                "Invalid controller language"
+            );
+            return Ok(value.to_string());
+        }
+        Ok("de".into())
+    }
+
     fn data_dir() -> PathBuf {
         user_dir("XDG_STATE_HOME", ".local/state").join("ansible-tui")
     }
@@ -203,5 +240,33 @@ mod tests {
             Some(dir.path().join(".venv/bin"))
         );
         assert_eq!(std::env::var_os("PATH"), before);
+    }
+}
+
+#[cfg(test)]
+mod language_tests {
+    use super::*;
+    #[test]
+    fn controller_helper_and_explicit_overrides() {
+        let project = tempfile::tempdir().unwrap();
+        let cfg = Config {
+            project: project.path().to_path_buf(),
+            ..Config::default()
+        };
+        assert_eq!(cfg.catalog_language(None).unwrap(), "de");
+        fs::create_dir(project.path().join("bin")).unwrap();
+        fs::create_dir(project.path().join("scripts")).unwrap();
+        fs::write(project.path().join("controller-base.json"), "{}").unwrap();
+        fs::write(project.path().join("bin/control"), "").unwrap();
+        let helper = project.path().join("scripts/controller_i18n.py");
+        fs::write(
+            &helper,
+            "import sys\nassert sys.argv[1:3] == ['language', '--root']\nprint('en')",
+        )
+        .unwrap();
+        assert_eq!(cfg.catalog_language(None).unwrap(), "en");
+        fs::write(&helper, "raise Exception('Must not run on an override')").unwrap();
+        assert_eq!(cfg.catalog_language(Some("de")).unwrap(), "de");
+        assert!(cfg.catalog_language(Some("xx")).is_err());
     }
 }

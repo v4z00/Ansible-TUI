@@ -25,13 +25,13 @@ def main():
   vars:
     log_file: "'''+str(project/'summary.txt')+'''"
   tasks:
-    - name: "TASK 9.3: Zusammenfassung im Terminal anzeigen und auf Bestätigung warten"
+    - name: Display deployment results
+      tags: [controller_docker_summary_ack]
       ansible.builtin.pause:
         prompt: |
-          ======================================================================
-          Deployment Zusammenfassung (Logfile-Inhalt):
+          Deployment summary (log contents):
           {{ lookup('file', log_file) }}
-          Drücken Sie Enter, um fortzufahren.
+          Press Enter to continue.
     - name: Echte Auswahl
       ansible.builtin.pause:
         prompt: "MJH_REAL_CHOICE alpha,beta eingeben"
@@ -45,7 +45,10 @@ def main():
   (project/'bin/control.d/docker-deploy-all.json').write_text(json.dumps({'commands':[{'name':'docker-deploy-all','description':'Neutraler Eingabetest','handler':'bin/control'}]}))
   state=b/'state';cfg=b/'config.json';sock=b/'tmux.sock'
   cfg.write_text(json.dumps({'project':str(project),'state':str(state),'tmux_socket':str(sock),'tmux':str(a.tmux),'refresh_seconds':5}))
-  def cli(*args):return subprocess.run([str(a.binary),'--config',str(cfg),*args],check=True,capture_output=True,text=True)
+  def cli(*args):
+   result=subprocess.run([str(a.binary),'--config',str(cfg),*args],capture_output=True,text=True)
+   assert result.returncode==0,result.stderr
+   return result
   def mux(*args):return subprocess.check_output([str(a.tmux),'-S',str(sock),*args],text=True)
   def api(method,**fields):
    with socket.socket(socket.AF_UNIX) as s:

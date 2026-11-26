@@ -153,3 +153,75 @@ mod tests {
         assert_eq!(db.jobs().unwrap()[0]["code"], 7);
     }
 }
+
+#[cfg(test)]
+mod catalog_languages {
+    use super::*;
+    use crate::catalog::{arguments, parse_document, scan};
+    use serde_json::json;
+    use std::fs;
+
+    #[test]
+    fn cache_serves_independent_languages_and_preserves_execution_contract() {
+        let project = tempfile::tempdir().unwrap();
+        let root = project.path();
+        fs::create_dir_all(root.join("bin/control.d")).unwrap();
+        fs::create_dir(root.join("descriptions")).unwrap();
+        fs::write(root.join("bin/control"), "").unwrap();
+        fs::write(
+            root.join("bin/control.d/example.json"),
+            r#"{"commands":[{"name":"example","description":"Registry fallback"}]}"#,
+        )
+        .unwrap();
+        let original = json!({
+            "schema_version":1, "kind":"command", "ref":"example", "title":"Old title", "documented":true,
+            "fields":[{"id":"flag", "type":"boolean","binding":{"kind":"flag","name":"--flag"},"label":"flag","description":"Old help"}],
+            "i18n":{"en":{"title":"English title","description":"Example: ```sh\ntrue\n```","fields":{"flag":{"label":"Enable","description":"English help"}}},
+                    "de":{"title":"Deutscher Titel","description":"Bitte lesen","fields":{"flag":{"label":"Aktivieren","description":"Deutsche Hilfe"}}}}
+        });
+        let path = root.join("descriptions/example.md");
+        let markdown = |data: &Value| format!("# Existing prose\n\n```json\n{data}\n```\n");
+        fs::write(&path, markdown(&original)).unwrap();
+        let (catalog, errors) = scan(root).unwrap();
+        assert!(errors.is_empty());
+        let mut db = Db::open(std::path::Path::new(":memory:")).unwrap();
+        db.catalog(&catalog).unwrap();
+        for (lang, title, body, label) in [
+            ("en", "English title", "Example: ```sh\ntrue\n```", "Enable"),
+            ("de", "Deutscher Titel", "Bitte lesen", "Aktivieren"),
+            ("en", "English title", "Example: ```sh\ntrue\n```", "Enable"),
+        ] {
+            let mut entry = db.entries().unwrap().remove(0);
+            let hash = entry.hash.clone();
+            entry.localize(lang);
+            assert_eq!(entry.title, title);
+            assert_eq!(entry.body, body);
+            assert_eq!(entry.fields[0]["label"], label);
+            assert_eq!(entry.fields[0]["binding"]["name"], "--flag");
+            assert_eq!(entry.hash, hash);
+            assert_eq!(
+                arguments(&entry, &json!({"flag":true})).unwrap(),
+                vec!["--flag"]
+            );
+        }
+        let mut old = original.clone();
+        old.as_object_mut().unwrap().remove("i18n");
+        let mut entry = parse_document(&markdown(&old)).unwrap();
+        entry.localize("en");
+        assert_eq!(entry.title, "Old title");
+        assert!(entry.body.contains("Existing prose"));
+        assert_eq!(entry.fields[0]["description"], "Old help");
+
+        let mut stale = original;
+        stale["source_hashes"] = json!({"missing.sh":"0".repeat(64)});
+        fs::write(&path, markdown(&stale)).unwrap();
+        let (entries, _) = scan(root).unwrap();
+        db.catalog(&entries).unwrap();
+        for (lang, warning) in [("en", "Source changed"), ("de", "Quelle geändert")] {
+            let mut entry = db.entries().unwrap().remove(0);
+            entry.localize(lang);
+            assert!(!entry.documented);
+            assert!(entry.body.starts_with(warning));
+        }
+    }
+}

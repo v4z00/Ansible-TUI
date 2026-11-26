@@ -17,6 +17,8 @@ use std::path::PathBuf;
     about = "Ansible TUI · Playbooks, Inventory und optionale Integrationen"
 )]
 struct Cli {
+    #[arg(long, global = true, env = "CONTROLLER_LANG", value_parser = ["de", "en"])]
+    lang: Option<String>,
     #[arg(long, env = "ANSIBLE_TUI_CONFIG")]
     config: Option<PathBuf>,
     #[command(subcommand)]
@@ -89,7 +91,13 @@ async fn run() -> Result<()> {
         println!("Konfiguration: {}", path.display());
         return Ok(());
     }
-    let cfg = config::Config::load(&path)?;
+    let mut cfg = config::Config::load(&path)?;
+    if matches!(
+        action,
+        Action::Open | Action::Ui | Action::Serve | Action::Api { .. }
+    ) {
+        cfg.language = cfg.catalog_language(cli.lang.as_deref())?;
+    }
     let tmux_enabled = || preferences::Preferences::load(&cfg).map(|p| p.tmux_enabled);
     match action {
         Action::Init { .. } | Action::Idle => unreachable!(),
@@ -124,6 +132,8 @@ async fn run() -> Result<()> {
                 std::env::current_exe()?.display().to_string(),
                 "--config".into(),
                 path.canonicalize()?.display().to_string(),
+                "--lang".into(),
+                cfg.language.clone(),
                 "ui".into(),
             ];
             let pane = runtime::new_window(&cfg, "Verwaltung", &args, &cfg.project).await?;

@@ -84,3 +84,11 @@ Weitere Tastenkürzel und Betriebsabläufe findest du in der [Betriebsanleitung]
   "source_hashes": {}
 }
 ```
+
+
+## Sprache der Beschreibungen
+
+Mit `ansible-tui --lang en ui` öffnest du den Katalog auf Englisch. Alternativ gilt
+`CONTROLLER_LANG`, danach die Sprache des Controllers. Ältere Projekte starten
+auf Deutsch. Befehlsnamen, Parameterwerte und Zielnamen bleiben beim Wechsel
+erhalten. Der angezeigte Quellstatus gilt in beiden Sprachen.

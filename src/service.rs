@@ -442,11 +442,25 @@ impl State {
                 json!({"version":env!("CARGO_PKG_VERSION"),"project":self.cfg.project,"errors":self.errors.lock().unwrap().clone(),"max_running":self.cfg.max_running}),
             ),
             "catalog.list" => {
+                let language = match r.get("lang") {
+                    None => self.cfg.language.as_str(),
+                    Some(value) => value
+                        .as_str()
+                        .context("Catalog language must be de or en")?,
+                };
+                anyhow::ensure!(
+                    matches!(language, "de" | "en"),
+                    "Unsupported catalog language"
+                );
+                let language = language.to_string();
                 let docker = self.preferences.lock().unwrap().docker_enabled;
                 self.database(move |db| {
                     let mut entries = db.entries()?;
                     if !docker {
                         entries.retain(|entry| !catalog::docker_command(entry));
+                    }
+                    for entry in &mut entries {
+                        entry.localize(&language);
                     }
                     Ok(serde_json::to_value(entries)?)
                 })
@@ -1167,7 +1181,10 @@ pub async fn serve(cfg: Config, config_path: PathBuf) -> Result<()> {
     drop(lock);
     Ok(())
 }
-pub async fn call(cfg: &Config, req: Value) -> Result<Value> {
+pub async fn call(cfg: &Config, mut req: Value) -> Result<Value> {
+    if req["method"] == "catalog.list" && req.get("lang").is_none() {
+        req["lang"] = Value::String(cfg.language.clone());
+    }
     let mut stream = UnixStream::connect(cfg.socket())
         .await
         .context("Hintergrunddienst nicht erreichbar")?;

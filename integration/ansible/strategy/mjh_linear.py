@@ -11,23 +11,28 @@ import uuid
 from ansible.plugins.strategy.linear import StrategyModule as Linear
 from ansible.utils.display import Display
 
-SUMMARY_TASK = 'TASK 9.3: Zusammenfassung im Terminal anzeigen und auf Bestätigung warten'
-SUMMARY_END = 'Drücken Sie Enter, um fortzufahren.'
+SUMMARY_TAG = 'controller_docker_summary_ack'
+LEGACY_TASK = 'TASK 9.3: Zusammenfassung im Terminal anzeigen und auf Bestätigung warten'
+LEGACY_PROMPT = ('Deployment Zusammenfassung (Logfile-Inhalt):', 'Drücken Sie Enter, um fortzufahren.')
+SUMMARY_PROMPT = ("Deployment summary (log contents):\n"
+                  "{{ lookup('file', log_file) }}\n"
+                  "Press Enter to continue.")
 
 
 def is_summary_ack(task):
     args = task.args or {}
-    prompt = args.get('prompt')
-    lines = [line.strip() for line in prompt.splitlines()
-             if line.strip() and set(line.strip()) != {'='}] if isinstance(prompt, str) else []
-    return (task.action in ('pause', 'ansible.builtin.pause', 'ansible.legacy.pause')
-            and task.get_name().strip() == SUMMARY_TASK
-            and args.get('seconds') is None and args.get('minutes') is None
-            and args.get('echo', True) is True
-            and len(lines) == 3
-            and lines[0] == 'Deployment Zusammenfassung (Logfile-Inhalt):'
-            and lines[1] in ("{{ lookup('file', log_file) }}", '{{ lookup("file", log_file) }}')
-            and lines[2] == SUMMARY_END)
+    if (task.action not in ('pause', 'ansible.builtin.pause', 'ansible.legacy.pause')
+            or set(args) - {'prompt', 'echo'} or args.get('echo', True) is not True
+            or task.register or not isinstance(args.get('prompt'), str)):
+        return False
+    if SUMMARY_TAG in (task.tags or ()):
+        return args['prompt'].strip() == SUMMARY_PROMPT
+    lines = [line.strip() for line in args['prompt'].splitlines()
+             if line.strip() and set(line.strip()) != {'='}]
+    if len(lines) != 3 or lines[1] not in ("{{ lookup('file', log_file) }}", '{{ lookup("file", log_file) }}'):
+        return False
+    prompt = lines[0], lines[2]
+    return task.get_name().strip() == LEGACY_TASK and prompt == LEGACY_PROMPT
 
 
 def signal(state, token=''):
