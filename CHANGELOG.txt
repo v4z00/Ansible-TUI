@@ -1,4 +1,4 @@
-s0.3.0 - 26.11.2026
+0.3.0 - 26.11.2026
 - Die TUI zeigt verfügbare Controllerbeschreibungen auf Deutsch oder Englisch.
 - Die Docker-Zusammenfassung erkennt den neuen englischen und den bisherigen deutschen Ablauf. Die Freigabe zum Entfernen verwaister Stacks bleibt interaktiv.
 
