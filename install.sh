@@ -18,6 +18,7 @@ Ansible TUI für Linux installieren oder aus GitHub-Tags aktualisieren.
 Optionen
   --project PFAD    Vorhandenes Ansible-Projekt für die Erstkonfiguration
   --inventory PFAD  Optionales Inventory für die Erstkonfiguration
+  --lang de|en      Catalog language for new projects
   --config PFAD     Ansible-TUI-Konfigurationsdatei für diesen Aufruf
   --prefix PFAD     Installationsordner (Standard ~/.local/opt/ansible-tui)
   --bin-dir PFAD    Ordner für die Befehle (Standard ~/.local/bin)
@@ -51,14 +52,16 @@ fi
 project=
 inventory=
 requested=
+lang=
 check=no
 while (( $# > 0 )); do
     case "$1" in
         -h|--help) usage; exit 0 ;;
         --check) check=yes; shift ;;
-        --project|--inventory|--config|--prefix|--bin-dir|--version)
+        --project|--inventory|--config|--prefix|--bin-dir|--version|--lang)
             [[ $# -ge 2 && -n "$2" ]] || die "Wert fehlt für $1."
             case "$1" in
+                --lang) [[ $2 == de || $2 == en ]] || die 'Use --lang de or --lang en'; lang=$2 ;;
                 --project) project=$2 ;;
                 --inventory) inventory=$2 ;;
                 --config) config=$2 ;;
@@ -204,6 +207,7 @@ if [[ -e "$config" || -L "$config" ]]; then
 else
     init=(init --project "$project")
     if [[ -n "$inventory" ]]; then init+=(--inventory "$inventory"); fi
+    if [[ -n "$lang" ]]; then init+=(--lang "$lang"); fi
     "$binary" --config "$config" "${init[@]}"
 fi
 

@@ -85,7 +85,11 @@ async fn run() -> Result<()> {
         tmux,
     } = action
     {
-        let cfg = config::Config::new_project(&project, inventory, docker, tmux)?;
+        let mut cfg = config::Config::new_project(&project, inventory, docker, tmux)?;
+        if path.exists() {
+            anyhow::bail!("Configuration already exists: {}", path.display());
+        }
+        cfg.catalog_lang = cfg.initial_language(cli.lang)?;
         runtime::ansible_ready(&cfg).await?;
         cfg.write_new(&path)?;
         println!("Konfiguration: {}", path.display());

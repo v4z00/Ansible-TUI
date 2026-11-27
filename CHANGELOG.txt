@@ -1,136 +1,62 @@
-0.3.0 - 26.11.2026
-- Die TUI zeigt verfügbare Controllerbeschreibungen auf Deutsch oder Englisch.
-- Die Docker-Zusammenfassung erkennt den neuen englischen und den bisherigen deutschen Ablauf. Die Freigabe zum Entfernen verwaister Stacks bleibt interaktiv.
+Ansible TUI changelog · German release notes in CHANGELOG.de.txt
 
-0.2.3 - 24.11.2026
-- tmux 3.5a: laufende Auftraege, Sitzungsuebersicht und automatische
-  Bereinigung werden wieder korrekt ausgewertet.
-- Docker-Hostreiter behalten beim Auswaehlen und Laden ihre Position.
-- Die tmux-Statusleiste zeigt den Rueckweg aus Auftragsterminals.
+s0.3.1 – Documentation and catalog language
+English README, installation guide, screen tour and API reference. New standalone
+projects can choose a catalog language at setup. Existing configurations retain
+their choice and legacy projects without one still use German.
 
-0.2.2 - 24.11.2026 – Mein Start mit GitHub
-Mit 0.2.2 bekommt Ansible TUI hier auf GitHub einen eigenen Release-Eintrag. In der Oberfläche wähle ich ein Playbook, prüfe die Zielhosts und sehe später, wie der Lauf ausgegangen ist.
+0.3.0 – 2026-11-26
+Controller descriptions are available in German and English. The Docker adapter
+recognizes both summary prompts. Removing orphaned stacks requires confirmation.
 
-- Einheitlicher Name Ansible TUI in Oberflaeche, CLI-Hilfe und Dokumentation.
+0.2.3 – 2026-11-24
+Fixed job tracking and cleanup on tmux 3.5a. Docker tabs retain their position
+while loading. The tmux status bar shows how to return from a job terminal.
 
-0.2.1 - 24.11.2026
-- Gemeinsamer Linux-Installer und GitHub-Updater fuer numerische Versionstags.
-- ansible-tui-setup --check zeigt den verfuegbaren Stand. Updates wechseln
-  atomar auf den geprueften Build. Bestehender lokaler Zustand bleibt nutzbar.
+0.2.2 – 2026-11-24 · My first GitHub release
+Ansible TUI received its own GitHub release and consistent naming across the UI,
+CLI help and documentation.
 
-0.2.0 - 24.11.2026
-- Eigener Projektname Ansible TUI und eigener Git-Checkout.
-- Lokale Initialisierung, Ansible-Voraussetzungscheck und Standardprojekte
-  mit Playbook-Vorschau, optionalem Limit und Check-Modus.
-- Hauptschalter fuer Docker, tmux und direktes SSH. Vordergrundausfuehrung
-  auch ohne tmux, mit Ergebnis im lokalen Auftragsverlauf.
-- Terminalaktionen pruefen die Auftragszuordnung vor dem Zugriff.
-- Bestehende Controller-Registry bleibt als Integrationsweg erhalten.
+0.2.1 – 2026-11-24
+One Linux installer handles numeric release tags. The setup command reports
+updates, verifies the build and switches releases atomically.
 
-0.1.7 - 22.11.2026
-- Startvorschau mit Vorder-/Hintergrundwahl, Maus/Tab/Pfeile/Enter.
-- Tmuxliste (MJH/Standard, fehlende sichtbar) und CLI mjh tmux. Sitzung ohne
-  aktive Verwaltung/Auftraege/Clients automatisch beenden und bei Bedarf neu
-  anlegen; unbekannte/fremde Fenster/Sitzungen erhalten. Interner Platzhalter.
-- Ctrl+Q schliesst Verwaltung und trennt die dortigen Clients, statt auf ein
-  ggf. totes Shell-Fenster umzuschalten. Laufende Jobs/andere Clients erhalten.
-- Fehler/Abbrueche explizit quittieren: gruen mit urspruenglichem Exitcode;
-  eigener persistenter Kenntnisnahmezeitstempel, Ergebnis unveraendert.
-- Ausgabelogs abgeschlossener Jobs samt Rotationen leeren, Ereignisverlauf leeren
-  und beendete Auftragsterminals gezielt schliessen. Maus/Ctrl-Hotkeys/Vorschau.
-- Logschreiber/Leeren synchronisiert, gepufferte alte Schreiber via Generation
-  entkoppelt. SQLite additive Quittierungstabelle, bestehende Jobs erhalten.
-- Echte Ctrl+Q-PTY-/Mauspruefungen, Persistenz/Logclear/Upgrade mit laufendem Job.
+0.2.0 – 2026-11-24
+Independent checkout, project initialization and Ansible checks. Regular projects
+can preview a playbook with a limit and check mode. Docker, tmux and SSH gained
+separate switches. Direct execution records results in local history.
 
-0.1.6 - 22.11.2026
-- Explorer-Buchstabensprung in Listen/Dropdowns, wiederholte Buchstaben und
-  Praefixe; / aktiviert Filtern bewusst. Aktionskuerzel jetzt Ctrl-Kombinationen.
-- Tmux-Hilfe erklaert Ctrl+B, loslassen, dann Folgetaste. Auftragsende zeigt
-  passende Verwaltungsnummer; beendete Ausgabe bleibt erhalten.
-- Docker-Zusammenfassungs-Enter-Pause gezielt automatisch bestaetigen, echte
-  Eingaben hervorholen und danach zur Verwaltung zurueckkehren. Zwei Settings.
-- Auftragsspezifischer Strategieadapter fuer geprueftes Ansible-Core2.19/2.20
-  linear, ohne Ansibleprojekt zu aendern oder generische Terminalantworten.
-- Paketbau/Installer liefern den Adapter mit; andere Pythondateien bleiben
-  ausgeschlossen. Vorige Auslieferungen unveraendert.
+0.1.7 – 2026-11-22
+Foreground/background preview, tmux session listing and idle-session cleanup.
+Closing the UI detaches its clients while jobs continue. Finished failures can
+be acknowledged. Completed job logs, panes and events can be cleared separately.
 
-0.1.5 - 22.11.2026
-- Sichtbare Zielvorgaben aus vorhandenen Registry-/Playbookquellen: nur eine
-  eindeutige statische Gruppe, gegen Inventory geprueft, niemals all-Fallback.
-- Linux/Docker sinnvoll begrenzen, manuelle Eingaben vor spaeten Antworten schuetzen.
-- 99_Einstellungen als letzter Arbeitsbereich, Taste9, eigene persistente Werte.
-  Zielvorgaben, Dockerpause, Intervall/Parallelitaet und Deploymentgruppe einstellbar.
-- Bestaetigtes Inventory-Cacheleeren, Dateien/Jobs erhalten; alte asynchrone
-  Inventoryresultate nach Clear verwerfen. Nach Gruppenwechsel Zuordnung leeren.
-- Kurzstart mjh ueber verwalteten PATH-Starter, fremde Befehlsnamen erhalten.
-- Ansible-Code und Beschreibungen unveraendert; keine zweite Zielmetadatenpflege.
+0.1.6 – 2026-11-22
+Prefix navigation, explicit filtering and Ctrl shortcuts. The status bar explains
+how to return from tmux. Optional prompt handling for supported linear Docker
+deployments can acknowledge the Enter-only summary or focus real input requests.
 
-0.1.4 - 22.11.2026
-- Einheitliche Pfeil-/Tab-Steuerung fuer Navigation, Reiter, Listen, Aktionen
-  und alle Formular-/Auswahldialogbuttons, sichtbarer Fokus und Tastenkontext.
-- 1..7 Bereichswahl, Ctrl+K/: Aktionsmenue, ? Tastenhilfe, Ctrl+N/P Reiterwechsel.
-  Bereichshotkeys unabhaengig vom Fokus; Eingaben und Suchtexte bleiben geschuetzt.
-- Textcursor/Zeichenbearbeitung, Pos1/Ende, typgetreue Vorlagen weiterbearbeiten,
-  Ctrl+U Feld leeren; Pfeil-Wiederholung ohne wiederholtes Bestaetigen von Aktionen.
-- Dockerreiter in Gruen/Gelb/Rot mit Symbolen; Sitzungszustand in Deutsch,
-  Exitcodes, Navigationssummen und achtsekundige Abschlussmeldungen.
-- Fehler haben Vorrang vor Erfolgsmeldungen; keine Meldungsflut durch alte Jobs.
-- Bestehende Mausbedienung, Docker-Dienstcache und tmux-Jobs bleiben erhalten.
+0.1.5 – 2026-11-22
+Forms derive target suggestions from the registered playbooks and actual inventory.
+Settings can disable suggestions or Docker polling, change the group or interval,
+and clear the in-memory inventory cache after preview.
 
-0.1.3 - 22.11.2026
-- Dockerhosts aus der vorhandenen Gruppe docker_deployment_hosts ermitteln,
-  inklusive Kindgruppen; deployment-exclude durch Generatorzuordnung beachten.
-- Anklickbare Hostreiter, Tastatur [ / ], Pfeilbuttons und suchbare Gesamtliste.
-- Asynchroner Dienstcache: 15s Standardintervall, Pool 4, pro Host Fehler/Retry,
-  Zeitstempel, keine SSH-Dopplung pro TUI und kein Verhungern spaeter Hosts.
-- Dockerbereich startet Inventorydiscovery asynchron, r erneuert Zuordnung.
-- RAM-Cache und kompakte Hostzusammenfassungen; Containerdaten nur je Auswahl.
-- Hostwechsel/entfernte Mitgliedschaft leeren alte Ansichten. Generationsschutz
-  verwirft spaete SSH-Ergebnisse nach Inventorywechsel.
-- Neue optionale Einstellungen docker_group/docker_refresh_seconds/docker_parallel.
-  Bestehende Konfigurationen, Ansibledateien und tmux-Auftraege bleiben erhalten.
+0.1.4 – 2026-11-22
+Consistent keyboard focus across actions and dialogs, improved text editing,
+color and count indicators on Docker tabs and brief completion notifications.
 
-0.1.2 - 22.11.2026
-- Deutsche Oberflaeche und Beschreibungsanzeige mit ae/oe/ue/ss statt Umlauten;
-  Originalwerte werden fuer Ausfuehrung und Speicherung unveraendert erhalten.
-- Konfigurator mit sichtbaren Optionsnamen (z.B. Ziele --limit), Zielauswahl
-  fuer Hosts/Gruppen und Inventoryladen bei der bewussten Auswahl des Felds.
-- Gruppenvorschlaege nach Inventoryladen; keine Beschraenkung auf 50 Eintraege.
-- Vorlagen aus dokumentierten Defaults/Beispielen, typgetreue Uebernahme,
-  Leeren, Tastatur/Maus und Vorschau. Keine stillen Defaults, Secrets ausgenommen.
-- Hostlistenaktualisierung vermischt keine Hosts mehr mit Modus-/Vorlagenlisten.
-- Mehr-Menue bleibt nach laengeren Beschriftungen sichtbar.
-- Hauptquelle aktualisiert, getrennte vollstaendige Installations-/Updatepakete.
+0.1.3 – 2026-11-22
+Docker deployment hosts come from the configured inventory group and its
+children. Select a host from tabs or a searchable list. Asynchronous polling,
+timestamps and generation checks keep slow or outdated results separate.
 
-MJH 0.1.1 - 18.11.2026
+0.1.2 – 2026-11-22
+German terminal labels gained ASCII spelling. Forms display option names, host
+and group selection and typed templates. Execution values retain their original
+spelling and type.
 
-BEHOBEN
-Die alte Navigation zeichnete Ratatui-Tabs mit Padding, berechnete Mausklicks
-aber mit abweichenden Textlaengen. Der Versatz summierte sich nach rechts.
-Jetzt stammen Trefferflaechen und Zeichnung aus denselben Rects pro Frame.
-Tabellen speichern den tatsaechlichen Scrolloffset; Klicks treffen sichtbare Zeilen.
-
-OBERFLAECHE
-Neue Seitenleiste, Statuskarten, strukturierte Tabellen und sichtbare Aktionen.
-Maus-/Tastaturaktionen laufen ueber denselben Dispatcher. Dropdowns, Checkbox-
-listen, Vorschau, Starten und Abbrechen sind anklickbar. Arrow-/Tab-Fokus,
-scrollbare Dialoge und Mehr-Menue auf schmalen Terminals. r aktualisiert immer;
-Sitzungen jetzt F6, Verlauf F7, Hilfe F8. Enter im Bestätigungsdialog steht
-zunaechst auf Zurueck; Start per Maus/Tab/y bewusst auswaehlen.
-Leere Hosts-/Docker-/Sitzungsansichten erklaeren den naechsten Schritt.
-Inventory laden und Docker-Host waehlen sind sichtbare Schaltflaechen.
-Formularfehler sind im Dialog sichtbar; Einzelwertauswahl uebernimmt den
-markierten Wert statt einer vorherigen Auswahl.
-
-HOSTS / DIENST
-Werkzeug-PATH enthaelt vorhandene Projekt-.venv/bin und ~/.local/bin; kein
-Laden interaktiver Shell-Startdateien im Dienst. Bare Inventoryhosts ohne
-eigene _meta.hostvars werden ueber die Gruppenmitglieder ebenfalls erkannt.
-Keine neuen Inventory-/Secretkopien und kein automatischer Inventorylauf.
-
-UPDATE
-Vorhandene unveraenderte MJH-systemd-Units werden akzeptiert und erhalten.
-Eigene Unit-Abweichungen werden nicht ersetzt. Installer startet nach
-Releasewechsel nur mjh.service neu, nicht den tmux-Unterbau. Alte Releases
-bleiben fuer laufende Auftraege erhalten; Konfiguration/SQLite unveraendert.
-Keine ZIP-Auslieferung fuer dieses Update, keine fachlichen Ansible-Aenderungen.
+MJH 0.1.1 – 2026-11-18
+Mouse hit areas and scrolled table rows align with drawing. New sidebar and
+actions, clickable forms and a safe default in confirmation dialogs. The service
+uses project-local tools and handles inventory hosts without separate hostvars.
+Updates preserved existing units, state and releases used by running jobs.

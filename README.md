@@ -1,15 +1,23 @@
-Hallöchen, mit Ansible TUI bediene ich Ansible direkt im Terminal. Ich kann Playbooks auswählen, vor dem Start die Zielhosts prüfen und später im Verlauf nachsehen, wie ein Lauf ausgegangen ist.
+[English](README.md) · [Deutsch](README.de.md)
 
-Auf einem Controller mit [Ansible-Allgm](https://github.com/v4z00/Ansible-Allgm) zeigt die TUI auch die dort registrierten Befehle und ihre Beschreibungen. Du kannst sie ebenso mit einem eigenständigen Ansible-Projekt verwenden.
+# Ansible TUI
 
-Die TUI entsteht mit KI-Unterstützung und ist noch in Entwicklung. Wenn dir beim Ausprobieren etwas auffällt, schreib mir gern ein Issue.
+I use this terminal interface to pick an Ansible operation, check which hosts it will touch and find the result afterwards. It works with a regular Ansible project. On an [Ansible-Allgm controller](https://github.com/v4z00/Ansible-Allgm) it also reads the registered commands, their descriptions and the fields for each form.
 
-Der Projektcode steht unter der [MIT-Lizenz](LICENSE). Für mitgelieferte Drittkomponenten gelten deren jeweilige Lizenzen.
+## A first run
 
-[Changelog](CHANGELOG.txt) · [GitHub-Releases](https://github.com/v4z00/Ansible-TUI/releases)
+Open **Ansible** with **2**. In a standalone project, choose a playbook, select an inventory limit if needed and review the check-mode preview. On an Allgm controller, choose a command and press **Ctrl+D** to read its description before opening the form. The [screen and keyboard guide](descriptions/oberflaeche.md) shows where the list, preview and actions appear.
 
-Ich entwickle und teste auf `staging`. Freigegebene Änderungen kommen nach `main`.
+| View | What you can do |
+| --- | --- |
+| Hosts | Load the project inventory, inspect the resolved hosts and open an SSH connection if enabled. |
+| Docker | Inspect a deployment host and its containers, read logs or preview a management action. |
+| Sessions and history | Follow a running job, read its exit code and return to the terminal. With tmux enabled, jobs can continue after disconnecting. |
 
-- [Auf Debian installieren und zum ersten Mal starten](descriptions/installation.md)
-- [So sieht die TUI aus – Ansicht und Tastenkürzel](descriptions/oberflaeche.md)
-- [Betrieb](docs/BETRIEB.txt) · [API](API.txt) · [Entwicklung und Tests](descriptions/entwicklung.txt)
+## Install and use
+
+Follow the [Debian installation guide](descriptions/installation.md) to build the release, point it at your project and start the local service. In a second terminal, run `ansible-tui`. For English descriptions, use `ansible-tui --lang en ui`. Some interface labels are in German; the screen guide shows them as they appear.
+
+[Operator guide](docs/OPERATIONS.md) · [Local API](API.txt) · [Build and test](descriptions/entwicklung.txt) · [Changelog](CHANGELOG.txt)
+
+I develop and test on `staging`. Releases come from `main`. I use AI to help develop the TUI. Issues with the version, command and what you saw on screen are welcome. [Releases](https://github.com/v4z00/Ansible-TUI/releases) · [MIT license](LICENSE) · [Dependency licenses](THIRD_PARTY.txt)

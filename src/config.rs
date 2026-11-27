@@ -13,6 +13,8 @@ pub struct Config {
     pub project: PathBuf,
     #[serde(skip)]
     pub language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub catalog_lang: Option<String>,
     pub state: PathBuf,
     pub tmux_socket: PathBuf,
     pub refresh_seconds: u64,
@@ -34,6 +36,7 @@ impl Default for Config {
         Self {
             project: ".".into(),
             language: "de".into(),
+            catalog_lang: None,
             state: Self::data_dir(),
             tmux_socket: Self::data_dir().join("tmux.sock"),
             refresh_seconds: 60,
@@ -52,9 +55,54 @@ impl Default for Config {
     }
 }
 impl Config {
+    pub fn initial_language(&self, requested: Option<String>) -> Result<Option<String>> {
+        if requested.is_some() || self.project.join("controller-base.json").is_file() {
+            return Ok(requested);
+        }
+        use std::io::{BufRead, BufReader};
+        let locale = ["LC_ALL", "LC_MESSAGES", "LANG"]
+            .into_iter()
+            .filter_map(|key| std::env::var(key).ok())
+            .find(|value| !value.is_empty())
+            .unwrap_or_default();
+        let suggested = if locale
+            .split(['_', '.', '@', '-'])
+            .next()
+            .unwrap_or("")
+            .eq_ignore_ascii_case("de")
+        {
+            "de"
+        } else {
+            "en"
+        };
+        let Ok(terminal) = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("/dev/tty")
+        else {
+            return Ok(Some(suggested.into()));
+        };
+        let mut reader = BufReader::new(terminal.try_clone()?);
+        let mut writer = terminal;
+        loop {
+            write!(
+                writer,
+                "Catalog language / Katalogsprache [de/en, Enter = {suggested}]: "
+            )?;
+            writer.flush()?;
+            let mut reply = String::new();
+            reader.read_line(&mut reply)?;
+            match reply.trim() {
+                "" => return Ok(Some(suggested.into())),
+                "de" | "en" => return Ok(Some(reply.trim().into())),
+                _ => continue,
+            }
+        }
+    }
+
     pub fn catalog_language(&self, requested: Option<&str>) -> Result<String> {
         let supported = |value: &str| matches!(value, "de" | "en");
-        if let Some(value) = requested {
+        if let Some(value) = requested.or(self.catalog_lang.as_deref()) {
             anyhow::ensure!(supported(value), "Unsupported catalog language (de/en)");
             return Ok(value.to_string());
         }
@@ -246,6 +294,19 @@ mod tests {
 #[cfg(test)]
 mod language_tests {
     use super::*;
+    #[test]
+    fn saved_catalog_preference_and_run_override() {
+        let old: Config = serde_json::from_str("{}").unwrap();
+        assert!(old.catalog_lang.is_none());
+        let cfg = Config {
+            catalog_lang: Some("en".into()),
+            ..old
+        };
+        let decoded: Config = serde_json::from_slice(&serde_json::to_vec(&cfg).unwrap()).unwrap();
+        assert_eq!(decoded.catalog_language(None).unwrap(), "en");
+        assert_eq!(decoded.catalog_language(Some("de")).unwrap(), "de");
+    }
+
     #[test]
     fn controller_helper_and_explicit_overrides() {
         let project = tempfile::tempdir().unwrap();

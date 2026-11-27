@@ -1,0 +1,125 @@
+ANSIBLE TUI - LOKALE API (Unix-Socket, Newline-JSON)
+Nur fuer berechtigte Prozesse des Betriebskontexts; kein Netzwerkdienst.
+Antwort: {"ok":true,"data":...} oder {"ok":false,"error":"..."}.
+CLI: ansible-tui api 'ANFRAGE'
+
+LESEN
+{"method":"status"}
+{"method":"catalog.list"}
+{"method":"catalog.list","lang":"en"}
+{"method":"catalog.refresh"}
+{"method":"completion.query","source":"inventory.targets","prefix":"demo"}
+{"method":"inventory.refresh"}  BEWUSSTE Inventory-Ausfuehrung, ggf. API/Plugins!
+{"method":"hosts.list"}          nur aufgeloeste Verbindungsdaten im RAM
+{"method":"jobs.list"}
+{"method":"events.list"}
+{"method":"docker.list","host":"demo"}
+{"method":"docker.stats","host":"demo"}
+{"method":"docker.inspect","host":"demo","container":"abc123"}
+{"method":"compose.list","host":"demo"}
+
+AUFTRAEGE (explizite Nutzeraktion erforderlich)
+{"method":"control.start","command":"base","values":{"targets":["demo"]}}
+{"method":"control.start","command":"bootstrap","args":["--target","demo"]}
+{"method":"ssh.start","host":"demo"}
+{"method":"tunnel.start","host":"demo","local_port":15432,"target":"db.example.invalid","target_port":5432}
+{"method":"docker.start","host":"demo","container":"abc123","action":"logs"}
+{"method":"docker.start","host":"demo","container":"abc123","action":"shell"}
+{"method":"docker.start","host":"demo","container":"abc123","action":"restart","confirm":"demo:abc123:restart"}
+{"method":"compose.edit","file":"demo/stack/compose.yml"}
+{"method":"job.stop","id":"JOB-ID","confirm":"JOB-ID"}
+
+Containeraktionen: logs, shell, start, stop, restart. Keine impliziten Prunes.
+Composeeditor: nano, Quelle unter konfiguriertem compose_root, private .before-
+Kopie im Zustandspfad. Nach Bearbeitung passenden bestehenden Docker-Check/
+Deploymentbefehl gezielt starten. Kein erfundener Einzelstackfilter.
+
+API 0.1.x ist noch nicht langfristig stabil. Keine Passwoerter/Tokens in args
+uebergeben. Argumente sind notwendiger Teil privater langlebiger Jobdateien;
+strukturierte Ereignisse speichern keine kompletten Argumentlisten.
+
+AUSGABELOGS (nur nach ausdruecklicher Auswahl)
+{"method":"job.capture","id":"JOB-ID","confirm":"JOB-ID"}
+{"method":"job.log.read","id":"JOB-ID"}
+Capture begrenzt auf 5 x 10 MiB, Lesen maximal letzter Abschnitt von 256 KiB.
+
+ERWEITERUNG 0.1.3 - DOCKER-DEPLOYMENTCACHE
+hosts.list: zusaetzliches Boolean docker_deployment, keine rohen Hostvars/Tags.
+docker.discover {force?: bool}: sofortige Antwort; Inventory im Hintergrund,
+  falls noch nicht geladen oder force=true. Kein periodischer Inventorylauf.
+docker.hosts: {hosts:[{host,state,loading,containers,at,error}],
+  discovering,inventory_loaded,error,group,group_present}. state pending/ready/error.
+  Kompakte Zusammenfassungen ohne Containerzeilen. Rein lesend, keine SSH-Abfrage.
+docker.snapshot {host}: letztes {host,rows,at,state,error}; nur Deploymenthosts.
+  Rein lesender RAM-Cache, pending vor erstem Ergebnis, error bewahrt letzte rows/at.
+  Erfolgreiche leere rows sind bereit, fehlende Ergebnisse dagegen pending/error.
+Bestehende docker.list/stats/inspect-Aktionen bleiben explizite direkte Abfragen.
+Cachepoller startet nach bewusstem Inventoryladen oder Dockerbereichsaufruf.
+Koordinator-Neustart leert Cache, tmux-Jobs bleiben davon unabhaengig.
+
+ERWEITERUNG 0.1.5
+catalog.list liefert target_hint nur als Ableitung statischer Commandrequires-
+Playbookgruppen, keine neue beschreibende Registry/Quelle.
+control.defaults {command}: {values,hint}, nur gepruefte --limit-Formulare,
+  eindeutige vorhandene Gruppe. Coldcache darf dazu bewusst Inventory laden.
+settings.get: {values,preferences_file,project,inventory_loaded,host_count,...}.
+settings.update {values}: vollstaendige typisierte Preferencewerte; Validierung,
+  atomar mit Modus 0600 im eigenen State, sofort wirksam. Keine Zielhostaktionen.
+inventory.clear {confirm:"clear-cache"}: {cleared:true}, nur RAM; Jobs/Dateien
+  erhalten. Generationswechsel verwirft aeltere laufende/queued Ergebnisse.
+Aktive Praeferenzen ueberdauern Dienstneustarts, config.json bleibt erhalten.
+
+ERWEITERUNG 0.1.6
+settings.get/update: zusaetzliche boolesche values docker_auto_ack und
+ docker_auto_focus (Standard true). Alte gespeicherte Werte werden um Defaults
+ ergaenzt. Autoack fuer neue Jobs, Fokusfreigabe sofort wirksam.
+jobs.list: auto_focus je Job, needs_input fuer aktive Jobs mit bestaendigem
+ privatem Eingabemarker, interaction_token nur bei Eingabe. Keine Prompts/Antworten.
+Marker sind fluechtig auswertbarer Zustand, keine neue SQLite-Jobphase. Abgeschlossene
+Jobs melden keine Eingabe. API uebernimmt selbst keinen Terminalfensterwechsel.
+
+ERWEITERUNG 0.1.7
+jobs.list: acknowledged_at (null oder RFC3339-Zeitstempel). state/code bleiben
+ technisch unveraendert; Clients duerfen quittierte Fehler gruen darstellen.
+job.ack {id,confirm:id}: nur abgeschlossene Fehler/Abbrueche, idempotent.
+job.log.clear {id,confirm:id}: nur abgeschlossene Jobs; .log/.log.1..4 entfernen.
+ Private log.lock/log.epoch koordinieren Writer/Leeren. Ergebnis/Pane erhalten.
+job.close {id,confirm:id}: nur abgeschlossen UND zugehoerige beendete Pane;
+ Pane-ID/Fenstername mit Job-ID werden geprueft. Keine Jobs loeschen.
+events.clear {confirm:"clear-events"}: Ereignisse entfernen; ein neues
+ events.cleared dokumentiert die Aktion. Jobs/Quittierungen/Dateilogs erhalten.
+Antwort dieser vier Methoden: {maintenance:true,message:...}.
+job.log.read liefert bei fehlendem/geleertem Log {output:""}.
+SQLite erhaelt additive Tabelle job_acknowledgements(job,at), user_version 2;
+keine bestehenden job-Spalten umbenannt/entfernt. Keine neue Pflegequelle.
+
+Tmux 0.1.7: tmux.list -> {servers:[{label,available,sessions:[{id,name,windows,
+ clients,socket}]}],output}. Ansible-TUI- und Standard-Socket, unbekannte private Sockets
+ nicht durchsucht. Rein lesend; fehlender Server liefert available:false.
+CLI ansible-tui tmux benoetigt keinen laufenden Ansible-TUI-Dienst.
+Startmodus ist eine TUI-Entscheidung bei der Vorschau. Der API-Auftrag bleibt
+ derselbe; Vordergrund bedeutet danach die zurueckgelieferte Pane oeffnen.
+Dienst beendet nur die Ansible-TUI-Sitzung ohne aktive/unklare Jobs, UI oder Clients und ohne
+ fremde/unbekannte Fenster. Naechster UI-/Jobstart erstellt fehlende Sitzung.
+
+
+ERWEITERUNG 0.2.0
+settings.get/update: docker_enabled, tmux_enabled und ssh_enabled.
+Bei ausgeschaltetem tmux verlangt die Auftrags-API terminal:true und liefert
+{id,direct_path}. Die TUI fuehrt diese vorbereitete Auftragsdatei im lokalen
+Terminal ueber run-job einmal aus. Ein nicht uebernommener Start laeuft ab.
+playbook.start {playbook, limit?, check?, terminal?} fuer Standardprojekte.
+Der Pfad muss im Katalog liegen. check:true setzt --check, limit setzt --limit.
+Inventory stammt aus dem Projekt oder der expliziten inventory-Konfiguration.
+
+
+Katalogsprache / Catalog language
+
+The catalog accepts de or en. For example: ansible-tui --lang en ui.
+Command help, description text and field labels follow --lang, CONTROLLER_LANG,
+then the configured controller language. Legacy projects default to German.
+catalog.list accepts a per-request lang. Concurrent clients can select
+different languages. SQLite caches one canonical record with both translations.
+A language change requires no catalog refresh. A missing translation uses the
+existing schema_version 1 title, field help or Markdown body. Source hashes,
+bindings, command names, constraints and submitted values do not change.

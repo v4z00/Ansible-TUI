@@ -1,3 +1,24 @@
+Build and test Ansible TUI from a checkout
+
+Install from this checkout and initialize an existing Ansible project:
+
+cargo install --locked --path .
+ansible-tui init --project /path/to/project
+
+Run the following commands from the repository root. The integration tests use
+temporary data and their own tmux socket.
+
+cargo fmt --check
+cargo test --locked
+cargo clippy --locked --all-targets -- -D warnings
+cargo build --locked
+python3 tests/installer.py  # on Linux
+python3 tests/standalone.py --binary target/debug/ansible-tui
+python3 tests/integration.py --binary target/debug/ansible-tui --tmux "$(command -v tmux)"
+python3 tests/lifecycle.py --binary target/debug/ansible-tui --tmux "$(command -v tmux)"
+
+Deutsch
+
 Ansible-TUI aus dem Checkout bauen und testen
 
 Im Checkout installieren und ein Projekt einrichten

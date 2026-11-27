@@ -1,125 +1,83 @@
-ANSIBLE TUI - LOKALE API (Unix-Socket, Newline-JSON)
-Nur fuer berechtigte Prozesse des Betriebskontexts; kein Netzwerkdienst.
-Antwort: {"ok":true,"data":...} oder {"ok":false,"error":"..."}.
-CLI: ansible-tui api 'ANFRAGE'
+Ansible TUI local API
 
-LESEN
-{"method":"status"}
-{"method":"catalog.list"}
-{"method":"catalog.list","lang":"en"}
-{"method":"catalog.refresh"}
-{"method":"completion.query","source":"inventory.targets","prefix":"demo"}
-{"method":"inventory.refresh"}  BEWUSSTE Inventory-Ausfuehrung, ggf. API/Plugins!
-{"method":"hosts.list"}          nur aufgeloeste Verbindungsdaten im RAM
-{"method":"jobs.list"}
-{"method":"events.list"}
-{"method":"docker.list","host":"demo"}
-{"method":"docker.stats","host":"demo"}
-{"method":"docker.inspect","host":"demo","container":"abc123"}
-{"method":"compose.list","host":"demo"}
+The service accepts one JSON request per line over its Unix socket. Run queries as
+the account that owns the service. Replies have the form {"ok":true,"data":...}
+or {"ok":false,"error":"..."}. Example:
 
-AUFTRAEGE (explizite Nutzeraktion erforderlich)
-{"method":"control.start","command":"base","values":{"targets":["demo"]}}
-{"method":"control.start","command":"bootstrap","args":["--target","demo"]}
-{"method":"ssh.start","host":"demo"}
-{"method":"tunnel.start","host":"demo","local_port":15432,"target":"db.example.invalid","target_port":5432}
-{"method":"docker.start","host":"demo","container":"abc123","action":"logs"}
-{"method":"docker.start","host":"demo","container":"abc123","action":"shell"}
-{"method":"docker.start","host":"demo","container":"abc123","action":"restart","confirm":"demo:abc123:restart"}
-{"method":"compose.edit","file":"demo/stack/compose.yml"}
-{"method":"job.stop","id":"JOB-ID","confirm":"JOB-ID"}
+ansible-tui api '{"method":"catalog.list","lang":"en"}'
 
-Containeraktionen: logs, shell, start, stop, restart. Keine impliziten Prunes.
-Composeeditor: nano, Quelle unter konfiguriertem compose_root, private .before-
-Kopie im Zustandspfad. Nach Bearbeitung passenden bestehenden Docker-Check/
-Deploymentbefehl gezielt starten. Kein erfundener Einzelstackfilter.
+Catalog and inventory
+  status, catalog.list, catalog.refresh, jobs.list, events.list
+  completion.query {source:"inventory.targets",prefix:"demo"}
+  inventory.refresh executes the configured inventory, including any API plugins.
+  hosts.list returns resolved connection data held in memory.
+  catalog.list accepts lang:"de" or "en" per request. The cache holds both languages.
+  Target suggestions come from an unambiguous, existing group named in the
+  command's playbooks. control.defaults {command} returns values and hint.
+  It can load inventory when an operator asks for defaults.
 
-API 0.1.x ist noch nicht langfristig stabil. Keine Passwoerter/Tokens in args
-uebergeben. Argumente sind notwendiger Teil privater langlebiger Jobdateien;
-strukturierte Ereignisse speichern keine kompletten Argumentlisten.
+Start a job (explicit operator action)
+  {"method":"control.start","command":"base","values":{"targets":["demo"]}}
+  {"method":"control.start","command":"bootstrap","args":["--target","demo"]}
+  {"method":"playbook.start","playbook":"playbooks/site.yml","limit":"demo","check":true}
+  {"method":"ssh.start","host":"demo"}
+  {"method":"tunnel.start","host":"demo","local_port":15432,"target":"db.example.invalid","target_port":5432}
+  {"method":"docker.start","host":"demo","container":"abc123","action":"logs"}
+  {"method":"docker.start","host":"demo","container":"abc123","action":"restart","confirm":"demo:abc123:restart"}
+  {"method":"compose.edit","file":"demo/stack/compose.yml"}
+  {"method":"job.stop","id":"JOB-ID","confirm":"JOB-ID"}
 
-AUSGABELOGS (nur nach ausdruecklicher Auswahl)
-{"method":"job.capture","id":"JOB-ID","confirm":"JOB-ID"}
-{"method":"job.log.read","id":"JOB-ID"}
-Capture begrenzt auf 5 x 10 MiB, Lesen maximal letzter Abschnitt von 256 KiB.
+  Standalone playbooks must exist in the catalog. check enables --check, limit
+  sets --limit and inventory comes from project configuration. With tmux off,
+  send terminal:true. The reply supplies id and direct_path for a one-time
+  local run-job invocation. An unclaimed start expires. With tmux on,
+  opening a foreground job selects its returned pane after starting the job.
+  Avoid credentials in args; private job files retain the arguments.
+  The service does not automatically retry jobs.
 
-ERWEITERUNG 0.1.3 - DOCKER-DEPLOYMENTCACHE
-hosts.list: zusaetzliches Boolean docker_deployment, keine rohen Hostvars/Tags.
-docker.discover {force?: bool}: sofortige Antwort; Inventory im Hintergrund,
-  falls noch nicht geladen oder force=true. Kein periodischer Inventorylauf.
-docker.hosts: {hosts:[{host,state,loading,containers,at,error}],
-  discovering,inventory_loaded,error,group,group_present}. state pending/ready/error.
-  Kompakte Zusammenfassungen ohne Containerzeilen. Rein lesend, keine SSH-Abfrage.
-docker.snapshot {host}: letztes {host,rows,at,state,error}; nur Deploymenthosts.
-  Rein lesender RAM-Cache, pending vor erstem Ergebnis, error bewahrt letzte rows/at.
-  Erfolgreiche leere rows sind bereit, fehlende Ergebnisse dagegen pending/error.
-Bestehende docker.list/stats/inspect-Aktionen bleiben explizite direkte Abfragen.
-Cachepoller startet nach bewusstem Inventoryladen oder Dockerbereichsaufruf.
-Koordinator-Neustart leert Cache, tmux-Jobs bleiben davon unabhaengig.
+Docker and Compose
+  docker.list {host}, docker.stats {host}, docker.inspect {host,container},
+  compose.list {host}. These are explicit queries. Container actions are logs,
+  shell, start, stop and restart. Compose uses nano and keeps a private before-image.
+  Run the relevant deployment command separately after editing.
+  docker.discover {force?:bool} starts asynchronous discovery when needed.
+  docker.hosts returns hosts[{host,state,loading,containers,at,error}] plus
+  discovering, inventory_loaded, error, group and group_present.
+  docker.snapshot {host} returns host,rows,at,state,error for a deployment host.
+  The snapshot is pending before the first result. Failed polls retain the last
+  successful rows and time; an empty successful result is ready.
+  hosts.list includes the docker_deployment boolean. The service keeps the cache
+  in memory and does not periodically rerun inventory. A service restart clears
+  it. Background polling starts after an explicit inventory load or Docker visit.
 
-ERWEITERUNG 0.1.5
-catalog.list liefert target_hint nur als Ableitung statischer Commandrequires-
-Playbookgruppen, keine neue beschreibende Registry/Quelle.
-control.defaults {command}: {values,hint}, nur gepruefte --limit-Formulare,
-  eindeutige vorhandene Gruppe. Coldcache darf dazu bewusst Inventory laden.
-settings.get: {values,preferences_file,project,inventory_loaded,host_count,...}.
-settings.update {values}: vollstaendige typisierte Preferencewerte; Validierung,
-  atomar mit Modus 0600 im eigenen State, sofort wirksam. Keine Zielhostaktionen.
-inventory.clear {confirm:"clear-cache"}: {cleared:true}, nur RAM; Jobs/Dateien
-  erhalten. Generationswechsel verwirft aeltere laufende/queued Ergebnisse.
-Aktive Praeferenzen ueberdauern Dienstneustarts, config.json bleibt erhalten.
+Preferences
+  settings.get returns values,preferences_file,project,inventory_loaded,host_count
+  and related state. settings.update {values} validates and atomically saves a
+  complete typed preference set (0600). It takes effect without target actions.
+  docker_enabled, tmux_enabled and ssh_enabled control integrations. docker_auto_ack
+  applies to new jobs, docker_auto_focus takes effect immediately. jobs.list can
+  supply auto_focus, needs_input and an interaction_token for pending input.
+  No prompt or answer is recorded in the marker.
+  inventory.clear {confirm:"clear-cache"} clears in-memory mappings and discards
+  old in-flight responses. Running jobs and files are retained.
 
-ERWEITERUNG 0.1.6
-settings.get/update: zusaetzliche boolesche values docker_auto_ack und
- docker_auto_focus (Standard true). Alte gespeicherte Werte werden um Defaults
- ergaenzt. Autoack fuer neue Jobs, Fokusfreigabe sofort wirksam.
-jobs.list: auto_focus je Job, needs_input fuer aktive Jobs mit bestaendigem
- privatem Eingabemarker, interaction_token nur bei Eingabe. Keine Prompts/Antworten.
-Marker sind fluechtig auswertbarer Zustand, keine neue SQLite-Jobphase. Abgeschlossene
-Jobs melden keine Eingabe. API uebernimmt selbst keinen Terminalfensterwechsel.
+Logs and maintenance
+  job.capture {id,confirm:id} enables output recording (five files of 10 MiB).
+  job.log.read {id} returns the latest 256 KiB or {output:""} for an empty log.
+  job.ack {id,confirm:id} acknowledges a finished failure or cancellation.
+  jobs.list then includes acknowledged_at in RFC 3339. The exit code and state
+  are retained. Acknowledgements survive service restarts.
+  job.log.clear {id,confirm:id} removes a finished job's log and rotations.
+  job.close {id,confirm:id} closes that finished job's identified pane.
+  events.clear {confirm:"clear-events"} clears events and records the clear.
+  These four operations return {maintenance:true,message:...}. SQLite schema 2
+  stores acknowledgements in job_acknowledgements. Job results are retained.
 
-ERWEITERUNG 0.1.7
-jobs.list: acknowledged_at (null oder RFC3339-Zeitstempel). state/code bleiben
- technisch unveraendert; Clients duerfen quittierte Fehler gruen darstellen.
-job.ack {id,confirm:id}: nur abgeschlossene Fehler/Abbrueche, idempotent.
-job.log.clear {id,confirm:id}: nur abgeschlossene Jobs; .log/.log.1..4 entfernen.
- Private log.lock/log.epoch koordinieren Writer/Leeren. Ergebnis/Pane erhalten.
-job.close {id,confirm:id}: nur abgeschlossen UND zugehoerige beendete Pane;
- Pane-ID/Fenstername mit Job-ID werden geprueft. Keine Jobs loeschen.
-events.clear {confirm:"clear-events"}: Ereignisse entfernen; ein neues
- events.cleared dokumentiert die Aktion. Jobs/Quittierungen/Dateilogs erhalten.
-Antwort dieser vier Methoden: {maintenance:true,message:...}.
-job.log.read liefert bei fehlendem/geleertem Log {output:""}.
-SQLite erhaelt additive Tabelle job_acknowledgements(job,at), user_version 2;
-keine bestehenden job-Spalten umbenannt/entfernt. Keine neue Pflegequelle.
+tmux
+  tmux.list returns {servers:[{label,available,sessions:[{id,name,windows,
+  clients,socket}]}],output} for the configured and default sockets. Missing
+  servers return available:false. The CLI command ansible-tui tmux works
+  without the service. Idle private sessions are closed only when they contain
+  no clients, UI, active or uncertain jobs, or unidentified windows.
 
-Tmux 0.1.7: tmux.list -> {servers:[{label,available,sessions:[{id,name,windows,
- clients,socket}]}],output}. Ansible-TUI- und Standard-Socket, unbekannte private Sockets
- nicht durchsucht. Rein lesend; fehlender Server liefert available:false.
-CLI ansible-tui tmux benoetigt keinen laufenden Ansible-TUI-Dienst.
-Startmodus ist eine TUI-Entscheidung bei der Vorschau. Der API-Auftrag bleibt
- derselbe; Vordergrund bedeutet danach die zurueckgelieferte Pane oeffnen.
-Dienst beendet nur die Ansible-TUI-Sitzung ohne aktive/unklare Jobs, UI oder Clients und ohne
- fremde/unbekannte Fenster. Naechster UI-/Jobstart erstellt fehlende Sitzung.
-
-
-ERWEITERUNG 0.2.0
-settings.get/update: docker_enabled, tmux_enabled und ssh_enabled.
-Bei ausgeschaltetem tmux verlangt die Auftrags-API terminal:true und liefert
-{id,direct_path}. Die TUI fuehrt diese vorbereitete Auftragsdatei im lokalen
-Terminal ueber run-job einmal aus. Ein nicht uebernommener Start laeuft ab.
-playbook.start {playbook, limit?, check?, terminal?} fuer Standardprojekte.
-Der Pfad muss im Katalog liegen. check:true setzt --check, limit setzt --limit.
-Inventory stammt aus dem Projekt oder der expliziten inventory-Konfiguration.
-
-
-Katalogsprache / Catalog language
-
-The catalog accepts de or en. For example: ansible-tui --lang en ui.
-Command help, description text and field labels follow --lang, CONTROLLER_LANG,
-then the configured controller language. Legacy projects default to German.
-catalog.list accepts a per-request lang. Concurrent clients can select
-different languages. SQLite caches one canonical record with both translations.
-A language change requires no catalog refresh. A missing translation uses the
-existing schema_version 1 title, field help or Markdown body. Source hashes,
-bindings, command names, constraints and submitted values do not change.
+German reference: API.de.txt
