@@ -1,4 +1,4 @@
-s0.3.1 – Dokumentation und Katalogsprache
+0.3.1 – Dokumentation und Katalogsprache
 README und Bedienhilfe sind auch auf Englisch verfügbar. Neue eigenständige Projekte bieten bei der Einrichtung eine Sprachauswahl an. Für bestehende Projekte ist keine Änderung nötig.
 
 0.3.0 - 26.11.2026

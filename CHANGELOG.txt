@@ -1,6 +1,6 @@
 Ansible TUI changelog · German release notes in CHANGELOG.de.txt
 
-s0.3.1 – Documentation and catalog language
+0.3.1 – Documentation and catalog language
 English README, installation guide, screen tour and API reference. New standalone
 projects can choose a catalog language at setup. Existing configurations retain
 their choice and legacy projects without one still use German.
